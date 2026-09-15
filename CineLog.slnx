@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CineLog.API/CineLog.API.csproj" />
+  <Project Path="CineLog.Business/CineLog.Business.csproj" />
+  <Project Path="CineLog.DataAccess/CineLog.DataAccess.csproj" />
+  <Project Path="CineLog.Entity/CineLog.Entity.csproj" />
+</Solution>

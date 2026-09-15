@@ -1,0 +1,23 @@
+# Node.js
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal
+.vs/
+appsettings.Development.json
+
+# Environment Variables
+.env
+
+# OS Files
+.DS_Store
+Thumbs.db

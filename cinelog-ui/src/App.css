@@ -1,0 +1,94 @@
+/* CineLog Premium 2030 Design */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top right, #1a1a2e 0%, #0d0d14 100%);
+    background-attachment: fixed;
+    color: #e2e8f0;
+    min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #0d0d14;
+}
+::-webkit-scrollbar-thumb {
+    background: #e50914;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #ff1e27;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background-color: rgba(20, 20, 25, 0.85) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Neon Movie Posters */
+.movie-poster-card {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    background: transparent !important;
+    border: none !important;
+}
+
+.movie-poster-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    transition: transform 0.5s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.movie-poster-card:hover {
+    transform: translateY(-10px) scale(1.03);
+    z-index: 10;
+}
+
+.movie-poster-card:hover img {
+    transform: scale(1.05);
+    box-shadow: 0 15px 30px rgba(229, 9, 20, 0.4); /* Netflix Kırmızısı Parlama */
+}
+
+/* Neon Buttons */
+.btn-neon {
+    background: transparent;
+    border: 2px solid #e50914;
+    color: #fff;
+    border-radius: 30px;
+    padding: 8px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-neon:hover {
+    background: #e50914;
+    box-shadow: 0 0 15px rgba(229, 9, 20, 0.6), 0 0 30px rgba(229, 9, 20, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* Navbar */
+.navbar-glass {
+    background: rgba(13, 13, 20, 0.8) !important;
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.text-glow {
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}

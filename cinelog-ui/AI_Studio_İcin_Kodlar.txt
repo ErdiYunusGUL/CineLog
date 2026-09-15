@@ -1,0 +1,866 @@
+=========================================
+DOSYA: src\App.jsx
+=========================================
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import MovieDetail from './pages/MovieDetail';
+import Discover from './pages/Discover';
+import Onboarding from './pages/Onboarding';
+import Profile from './pages/Profile'; // YENİ
+import api from './api';
+
+function App() {
+  const [user, setUser] = useState(null);
+
+  // Sayfa açıldığında Cüzdanda (LocalStorage) Yaka Kartı (Token) var mı diye bakıyoruz
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        // unique_name bizim C#'ta Token içine yazdığımız Username'dir
+        setUser({ username: decoded.unique_name });
+      } catch (error) {
+        localStorage.removeItem('token');
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    window.location.href = "/"; // Çıkış yapınca ana sayfaya at
+  };
+
+  return (
+    <Router>
+      {/* ÜST MENÜ (NAVBAR) */}
+      <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: '#1e1e1e', borderBottom: '1px solid #333' }}>
+        <div className="container">
+          <Link className="navbar-brand text-danger fw-bold" to="/"><i className="bi bi-film"></i> CineLog</Link>
+          <div className="collapse navbar-collapse" id="navbarNav">
+            <ul className="navbar-nav me-auto">
+              <li className="nav-item">
+                <Link className="nav-link text-light ms-4" to="/discover"><i className="bi bi-compass"></i> Keşfet</Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link text-warning ms-4" to="/onboarding"><i className="bi bi-magic"></i> Zevk Analizi</Link>
+              </li>
+            </ul>
+            
+            <form className="d-flex me-4 w-50" onSubmit={(e) => { e.preventDefault(); window.location.href = `/?search=${e.target.search.value}`; }}>
+              <input name="search" className="form-control form-control-sm bg-dark text-light border-secondary" type="search" placeholder="Film Ara..." aria-label="Search" />
+              <button className="btn btn-outline-danger btn-sm ms-2" type="submit"><i className="bi bi-search"></i></button>
+            </form>
+            {user ? (
+              <div className="d-flex align-items-center">
+                <Link className="btn btn-outline-info btn-sm me-3" to="/profile">
+                    <i className="bi bi-person-circle"></i> Profilim
+                </Link>
+                <span className="text-light me-3">Hoşgeldin, {user.username}</span>
+                <button className="btn btn-outline-light btn-sm" onClick={handleLogout}>Çıkış Yap</button>
+              </div>
+            ) : (
+              <div className="d-flex align-items-center flex-shrink-0">
+                <Link to="/login" className="btn btn-outline-danger btn-sm me-2">Giriş Yap</Link>
+                <Link to="/register" className="btn btn-danger btn-sm">Kayıt Ol</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* SAYFALARIN GÖSTERİLECEĞİ ORTA ALAN */}
+      <div className="container mt-4 mb-5">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login setAuthUser={setUser} />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/movie/:id" element={<MovieDetail />} />
+          <Route path="/discover" element={<Discover />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+
+
+
+=========================================
+DOSYA: src\pages\Home.jsx
+=========================================
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import api from '../api';
+
+function Home() {
+    const [movies, setMovies] = useState([]);
+    const [recommendedMovies, setRecommendedMovies] = useState([]);
+    const [favoriteGenreName, setFavoriteGenreName] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    const [searchParams] = useSearchParams();
+    const searchQuery = searchParams.get('search'); 
+
+    useEffect(() => {
+        setLoading(true);
+        
+        // 1. Kullanıcının Zevk Profilini Getir (Sadece ana sayfadaysak)
+        if (!searchQuery) {
+            api.get('/Interactions/my-taste')
+                .then(res => {
+                    const profile = res.data;
+                    setFavoriteGenreName(profile.favoriteGenreName);
+                    // 2. Profili varsa o türe ait filmleri Mega Filtre motorumuzdan çek!
+                    return api.get(`/Movies/discover?genreId=${profile.favoriteGenreId}`);
+                })
+                .then(res => {
+                    // 3. Sadece en iyi 6 öneriyi al ve şeride koy
+                    if(res && res.data) {
+                        setRecommendedMovies(res.data.slice(0, 6)); 
+                    }
+                })
+                .catch(err => {
+                    // Kullanıcı login değilse veya zevk profili yoksa hata verir, sorun yok gizli kalır.
+                });
+        }
+
+        // ESKİ KOD: Eğer URL'de bir kelime (searchQuery) varsa ARAMA kapısına git
+        if (searchQuery) {
+            api.get(`/Movies/search?query=${searchQuery}`)
+                .then(response => {
+                    setMovies(response.data);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.error("Arama yapılırken hata oluştu:", error);
+                    setLoading(false);
+                });
+        } 
+        // Arama kelimesi yoksa (normal ana sayfadaysak) POPÜLER filmleri getir
+        else {
+            api.get('/Movies/popular')
+                .then(response => {
+                    setMovies(response.data);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.error("Filmler çekilirken hata oluştu:", error);
+                    setLoading(false);
+                });
+        }
+    }, [searchQuery]);
+    
+      if (loading) return <h4 className="text-center mt-5 text-danger">Filmler Yükleniyor... <div className="spinner-border text-danger"></div></h4>;
+
+      return (
+        <div>
+            {/* YENİ: ÖNERİLENLER ŞERİDİ (Netflix Tarzı) */}
+            {recommendedMovies.length > 0 && !searchQuery && (
+                <div className="mb-5 p-4 rounded shadow-lg" style={{ backgroundColor: '#121212', border: '1px solid #e50914' }}>
+                    <h4 className="text-light fw-bold mb-4">
+                        <i className="bi bi-stars text-warning"></i> Sizin İçin Önerilenler <span className="badge bg-danger ms-2">{favoriteGenreName}</span>
+                    </h4>
+                    <div className="row g-3">
+                        {recommendedMovies.map(movie => (
+                            <div key={movie.id} className="col-6 col-md-4 col-lg-2">
+                                <Link to={`/movie/${movie.id}`} state={{ movie }} className="text-decoration-none">
+                                    <div className="card bg-dark text-white h-100 shadow-sm" style={{ border: 'none', transition: 'transform 0.2s', cursor: 'pointer' }} 
+                                         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                                        <img 
+                                            src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image'} 
+                                            className="card-img-top rounded" 
+                                            alt={movie.title} 
+                                        />
+                                    </div>
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ESKİ: POPÜLER / ARAMA SONUÇLARI */}
+            <h4 className="text-light fw-bold mb-4">{searchQuery ? "Arama Sonuçları" : "Popüler Filmler"}</h4>
+            <div className="row row-cols-1 row-cols-md-4 g-4">
+                {movies.map(movie => (
+                    <div key={movie.id} className="col">
+                        <Link to={`/movie/${movie.id}`} state={{ movie: movie }} style={{ textDecoration: 'none' }}>
+                        <div className="card h-100 shadow-lg" style={{ backgroundColor: 'var(--bg-card)', border: 'none', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer' }}>
+                            <img 
+                                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
+                                className="card-img-top" 
+                                alt={movie.title} 
+                                style={{ height: '350px', objectFit: 'cover' }}
+                            />
+                            <div className="card-body">
+                                <h6 className="card-title text-light fw-bold text-truncate" title={movie.title}>{movie.title}</h6>
+                                <div className="d-flex justify-content-between align-items-center mt-2">
+                                    <span className="badge bg-danger"><i className="bi bi-star-fill text-warning"></i> {movie.vote_average.toFixed(1)}</span>
+                                    <small className="text-muted">{movie.release_date ? movie.release_date.substring(0,4) : ''}</small>
+                                </div>
+                            </div>
+                        </div>
+                        </Link>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+export default Home;
+
+
+
+=========================================
+DOSYA: src\pages\MovieDetail.jsx
+=========================================
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import api from '../api';
+
+function MovieDetail() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { id } = useParams(); // URL'deki ID'yi yakalar
+
+    // Eğer önceki sayfadan kargo (state) geldiyse onu kullan, gelmediyse boş (null) başla
+    const [movie, setMovie] = useState(location.state?.movie || null);
+
+    const [rating, setRating] = useState(0); 
+    const [communityRating, setCommunityRating] = useState(0);
+    const [providers, setProviders] = useState([]);
+    const [message, setMessage] = useState('');
+    const [isWatchlist, setIsWatchlist] = useState(false);
+    const [isWatched, setIsWatched] = useState(false);
+
+    const disqusShortname = "cinelogofficial"; 
+
+    // 1. AŞAMA: Eğer Film Yoksa C# Kapısına Git ve ID ile Getir!
+    useEffect(() => {
+        if (!movie) {
+            api.get(`/Movies/${id}`)
+               .then(res => setMovie(res.data))
+               .catch(err => navigate('/')); // Harbi yoksa Ana Sayfaya dön
+        }
+    }, [id, movie, navigate]);
+
+    // 2. AŞAMA: Film Elimize Ulaştıysa Yan Verileri (Puan, Afiş, Durum) Çek
+    useEffect(() => {
+        if (!movie) return; // Film gelmeden aşağıdakileri yapma!
+
+        // Puan Çek
+        api.get(`/Interactions/movie/${movie.id}/average`)
+           .then(res => setCommunityRating(res.data))
+           .catch(err => console.error(err));
+
+        // Platformları Çek
+        api.get(`/Movies/${movie.id}/providers`)
+           .then(res => {
+               const trProviders = res.data?.results?.TR?.flatrate || [];
+               setProviders(trProviders);
+           })
+           .catch(err => console.error(err));
+
+        // Buton Durumlarını (İzlendi vs) Çek
+        api.get(`/Interactions/movie-status/${movie.id}`)
+           .then(res => {
+               setIsWatchlist(res.data.isWatchlist);
+               setIsWatched(res.data.isWatched);
+           })
+           .catch(err => { /* Login olmayanları geç */ });
+
+        // NATIVE DISQUS YÜKLEMESİ
+        if (window.DISQUS) {
+            window.DISQUS.reset({
+                reload: true,
+                config: function () {
+                    this.page.identifier = `${movie.id}`;
+                    this.page.url = window.location.href;
+                    this.page.title = movie.title;
+                }
+            });
+        } else {
+            const script = document.createElement('script');
+            script.src = `https://${disqusShortname}.disqus.com/embed.js`;
+            script.setAttribute('data-timestamp', +new Date());
+            document.body.appendChild(script);
+        }
+    }, [movie]);
+
+    const toggleWatchlist = async () => {
+        try {
+            await api.post('/Interactions/watchlist', {
+                movieId: movie.id,
+                movieTitle: movie.title,
+                posterPath: movie.poster_path,
+                mainGenreId: movie.genre_ids ? movie.genre_ids[0] : 0
+            });
+            setIsWatchlist(!isWatchlist);
+        } catch (err) {
+            if (err.response?.status === 401) alert("Bunun için önce giriş yapmalısınız!");
+        }
+    };
+
+    const markAsWatched = async () => {
+        try {
+            await api.post('/Interactions/watched', {
+                movieId: movie.id,
+                movieTitle: movie.title,
+                posterPath: movie.poster_path,
+                mainGenreId: movie.genre_ids ? movie.genre_ids[0] : (movie.genres ? movie.genres[0]?.id : 0),
+                runtimeMinutes: movie.runtime || 120
+            });
+            setIsWatched(!isWatched);
+        } catch (err) {
+            if (err.response?.status === 401) alert("Bunun için önce giriş yapmalısınız!");
+        }
+    };
+
+    const handleRatingSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (rating === 0) {
+            alert("Lütfen puan vermek için en az 1 yıldıza tıklayın!");
+            return;
+        }
+
+        try {
+            await api.post('/Interactions/review', {
+                movieId: movie.id,
+                rating: rating
+            });
+            setMessage("Puanınız başarıyla eklendi!");
+            fetchCommunityRating();
+        } catch (err) {
+            if (err.response?.status === 401) {
+                alert("Puan vermek için önce giriş yapmalısınız!");
+            } else {
+                alert("Bir hata oluştu.");
+            }
+        }
+    };
+
+    if (!movie) return null;
+
+    return (
+        <div className="row mt-4">
+            {/* SOL TARAF: Afiş ve Platformlar */}
+            <div className="col-md-4">
+                <img 
+                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
+                    className="img-fluid rounded shadow-lg" 
+                    alt={movie.title} 
+                />
+                
+                {providers.length > 0 && (
+                    <div className="mt-4 p-3 rounded" style={{ backgroundColor: '#121212', border: '1px solid #333' }}>
+                        <h6 className="text-light mb-3"><i className="bi bi-tv text-danger"></i> Şimdi İzle (Türkiye)</h6>
+                        <div className="d-flex gap-3">
+                            {providers.map(p => (
+                                <div key={p.provider_id} className="text-center" title={p.provider_name}>
+                                    <img 
+                                        src={`https://image.tmdb.org/t/p/original${p.logo_path}`} 
+                                        alt={p.provider_name}
+                                        style={{ width: '50px', height: '50px', borderRadius: '12px' }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* SAĞ TARAF: Detaylar ve Yıldızlar */}
+            <div className="col-md-8">
+                <h2 className="text-light fw-bold">{movie.title}</h2>
+                <div className="d-flex align-items-center mb-4">
+                    <span className="badge bg-danger fs-6 me-3"><i className="bi bi-star-fill text-warning"></i> TMDB: {movie.vote_average.toFixed(1)} / 10</span>
+                    {communityRating > 0 && (
+                        <span className="badge bg-primary fs-6"><i className="bi bi-people-fill text-light"></i> CineLog Topluluk: {communityRating} / 10</span>
+                    )}
+                </div>
+
+                {/* YENİ: AKSİYON BUTONLARI */}
+                <div className="d-flex gap-3 mb-4">
+                    <button 
+                        onClick={markAsWatched} 
+                        className={`btn ${isWatched ? 'btn-success' : 'btn-outline-success'}`}>
+                        <i className={`bi ${isWatched ? 'bi-check-all' : 'bi-eye'}`}></i> {isWatched ? ' İzlendi' : ' İzledim'}
+                    </button>
+                    
+                    <button 
+                        onClick={toggleWatchlist} 
+                        className={`btn ${isWatchlist ? 'btn-warning' : 'btn-outline-warning'}`}>
+                        <i className={`bi ${isWatchlist ? 'bi-bookmark-fill' : 'bi-bookmark'}`}></i> {isWatchlist ? ' Listeden Çıkar' : ' Listeme Ekle'}
+                    </button>
+                </div>
+
+                <p className="text-light fs-5">{movie.overview}</p>
+                <small className="text-light">Çıkış Tarihi: {movie.release_date}</small>
+
+                <hr className="border-secondary mt-5" />
+
+                <h4 className="text-light"><i className="bi bi-star-half text-warning"></i> Filme Puan Ver</h4>
+                
+                <div className="card mt-4 mb-5" style={{ backgroundColor: 'var(--bg-card)', border: 'none' }}>
+                    <div className="card-body">
+                        {message && <div className="alert alert-success">{message}</div>}
+                        <form onSubmit={handleRatingSubmit}>
+                            <div className="mb-4">
+                                <div className="d-flex fs-3">
+                                    {[...Array(10)].map((star, index) => {
+                                        index += 1;
+                                        return (
+                                            <i key={index} 
+                                               className={index <= rating ? "bi bi-star-fill text-warning" : "bi bi-star text-secondary"} 
+                                               style={{ cursor: 'pointer', marginRight: '8px' }}
+                                               onClick={() => setRating(index)}
+                                            ></i>
+                                        );
+                                    })}
+                                </div>
+                                <small className="text-muted mt-2 d-block">Puanınız: {rating} / 10</small>
+                            </div>
+                            <button type="submit" className="btn btn-outline-warning">Puanı Kaydet</button>
+                        </form>
+                    </div>
+                </div>
+
+                {/* DISQUS NATIVE ALANI */}
+                <h4 className="text-light mb-4"><i className="bi bi-chat-left-text text-danger"></i> Yorumlar</h4>
+                <div className="bg-light p-3 rounded" id="disqus_thread"></div>
+
+            </div>
+        </div>
+    );
+}
+
+export default MovieDetail;
+
+
+
+=========================================
+DOSYA: src\pages\Profile.jsx
+=========================================
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api';
+
+function Profile() {
+    const [profileData, setProfileData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/Interactions/profile-data')
+           .then(res => {
+               setProfileData(res.data);
+               setLoading(false);
+           })
+           .catch(err => {
+               console.error(err);
+               setLoading(false);
+           });
+    }, []);
+
+    if (loading) return <h4 className="text-center mt-5 text-light">Profil Yükleniyor... <div className="spinner-border text-danger"></div></h4>;
+    if (!profileData) return <h4 className="text-center mt-5 text-danger">Lütfen giriş yapın.</h4>;
+
+    return (
+        <div className="container mt-4 mb-5 text-light">
+            {/* ÜST BİLGİ KARTI */}
+            <div className="card bg-dark border-secondary shadow-lg p-4 mb-5" style={{ borderRadius: '15px' }}>
+                <div className="row align-items-center">
+                    {/* Profil Resmi */}
+                    <div className="col-md-2 text-center mb-3 mb-md-0">
+                        <img src="https://ui-avatars.com/api/?name=Cine+Log&background=e50914&color=fff&size=120" 
+                             className="rounded-circle border border-3 border-danger shadow" 
+                             alt="Profil" 
+                        />
+                    </div>
+                    {/* İstatistikler */}
+                    <div className="col-md-10">
+                        <h3 className="fw-bold mb-4 text-center text-md-start">Sinema Profiliniz</h3>
+                        <div className="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start align-items-center">
+                            <div className="text-center px-3">
+                                <h2 className="text-danger fw-bold m-0">{profileData.watchedMovies.length}</h2>
+                                <small className="text-light text-uppercase fw-semibold" style={{ letterSpacing: '1px' }}>İzlenen</small>
+                            </div>
+                            <div className="text-center px-4 border-start border-secondary">
+                                <h2 className="text-info fw-bold m-0">{profileData.totalWatchHours}</h2>
+                                <small className="text-light text-uppercase fw-semibold" style={{ letterSpacing: '1px' }}>Saat</small>
+                            </div>
+                            <div className="text-center px-4 border-start border-secondary">
+                                <h2 className="text-warning fw-bold m-0">{profileData.watchlist.length}</h2>
+                                <small className="text-light text-uppercase fw-semibold" style={{ letterSpacing: '1px' }}>Listede</small>
+                            </div>
+                            <div className="text-center px-4 border-start border-secondary">
+                                <h2 className="text-success fw-bold m-0">
+                                    {profileData.tasteProfile ? profileData.tasteProfile.favoriteGenreName : "Belirsiz"}
+                                </h2>
+                                <small className="text-light text-uppercase fw-semibold" style={{ letterSpacing: '1px' }}>Favori Tür</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* YENİ: VERİ BİLİMİ (TÜR İSTATİSTİKLERİ) */}
+            {profileData.genreAverageRatings && Object.keys(profileData.genreAverageRatings).length > 0 && (
+                <div className="mb-5">
+                    <h4 className="fw-bold mb-4 border-bottom border-secondary pb-2">
+                        <i className="bi bi-bar-chart-line-fill text-info"></i> Türlere Göre Puan Ortalamalarım
+                    </h4>
+                    <div className="row g-4">
+                        {Object.entries(profileData.genreAverageRatings)
+                            .sort((a, b) => b[1] - a[1]) // Puanı yüksek olan (Örn: 9.5) başa gelsin
+                            .map(([genre, avgRating]) => (
+                            <div key={genre} className="col-md-6 col-lg-4">
+                                <div className="card bg-dark border-secondary p-3 shadow-sm h-100" style={{ borderRadius: '10px' }}>
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <span className="text-light fw-bold">{genre}</span>
+                                        <span className="badge bg-primary fs-6"><i className="bi bi-star-fill text-warning"></i> {avgRating.toFixed(1)} / 10</span>
+                                    </div>
+                                    <div className="progress" style={{ height: '8px', backgroundColor: '#333' }}>
+                                        {/* Puan 10 üzerinden olduğu için %100'e uyarlamak adına 10 ile çarpıyoruz */}
+                                        <div className={`progress-bar ${avgRating >= 8 ? 'bg-success' : avgRating >= 5 ? 'bg-warning' : 'bg-danger'}`}
+                                             role="progressbar" 
+                                             style={{ width: `${(avgRating / 10) * 100}%` }} 
+                                             aria-valuenow={avgRating} aria-valuemin="0" aria-valuemax="10">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* İZLEME LİSTESİ */}
+            <h4 className="fw-bold mb-4 border-bottom border-secondary pb-2"><i className="bi bi-bookmark-fill text-warning"></i> İzleme Listem ({profileData.watchlist.length})</h4>
+            <div className="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3 mb-5">
+                {profileData.watchlist.length === 0 && <p className="text-muted ms-2">Listeniz şu an boş.</p>}
+                {profileData.watchlist.map(item => (
+                    <div key={item.id} className="col">
+                        <Link to={`/movie/${item.movieId}`} className="text-decoration-none">
+                            <div className="card h-100 bg-transparent border-0" style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                                <img src={item.posterPath ? `https://image.tmdb.org/t/p/w500${item.posterPath}` : 'https://via.placeholder.com/500x750?text=No+Image'} className="rounded shadow-sm" alt={item.movieTitle} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
+                                <h6 className="text-light mt-2 text-truncate" style={{ fontSize: '0.9rem' }}>{item.movieTitle}</h6>
+                            </div>
+                        </Link>
+                    </div>
+                ))}
+            </div>
+
+            {/* İZLENEN FİLMLER */}
+            <h4 className="fw-bold mb-4 border-bottom border-secondary pb-2"><i className="bi bi-check-all text-success"></i> İzleme Geçmişim ({profileData.watchedMovies.length})</h4>
+            <div className="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
+                {profileData.watchedMovies.length === 0 && <p className="text-muted ms-2">Henüz film izlemediniz.</p>}
+                {profileData.watchedMovies.map(item => (
+                    <div key={item.id} className="col">
+                        <Link to={`/movie/${item.movieId}`} className="text-decoration-none">
+                            <div className="card h-100 bg-transparent border-0" style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                                <img src={item.posterPath ? `https://image.tmdb.org/t/p/w500${item.posterPath}` : 'https://via.placeholder.com/500x750?text=No+Image'} className="rounded shadow-sm" alt={item.movieTitle} style={{ width: '100%', height: 'auto', objectFit: 'cover', opacity: 0.8 }} />
+                                <h6 className="text-light mt-2 text-truncate" style={{ fontSize: '0.9rem' }}>{item.movieTitle}</h6>
+                            </div>
+                        </Link>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+export default Profile;
+
+
+
+=========================================
+DOSYA: src\pages\Discover.jsx
+=========================================
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api';
+
+function Discover() {
+    const [movies, setMovies] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // FİLTRE HAFIZALARI (STATE)
+    const [startYear, setStartYear] = useState('2015');
+    const [endYear, setEndYear] = useState('2024');
+    const [genreId, setGenreId] = useState('');
+    const [providerId, setProviderId] = useState('');
+
+    const fetchFilteredMovies = () => {
+        setLoading(true);
+        // C# tarafına yazdığımız Mega Filtre API'sine gidiyoruz
+        let url = `/Movies/discover?startYear=${startYear}&endYear=${endYear}`;
+        if (genreId) url += `&genreId=${genreId}`;
+        if (providerId) url += `&providerId=${providerId}`;
+
+        api.get(url)
+           .then(res => setMovies(res.data))
+           .catch(err => console.error(err))
+           .finally(() => setLoading(false));
+    };
+
+    // Sayfa ilk açıldığında varsayılan filtreyle getir
+    useEffect(() => {
+        fetchFilteredMovies();
+    }, []);
+
+    const handleFilterSubmit = (e) => {
+        e.preventDefault();
+        fetchFilteredMovies();
+    };
+
+    return (
+        <div className="row mt-4">
+            {/* SOL PANEL: FİLTRELER */}
+            <div className="col-md-3">
+                <div className="card text-light p-3 shadow-lg" style={{ backgroundColor: '#121212', border: '1px solid #333' }}>
+                    <h5 className="mb-4 text-danger"><i className="bi bi-funnel-fill"></i> Mega Filtre</h5>
+                    
+                    <form onSubmit={handleFilterSubmit}>
+                        <div className="mb-3">
+                            <label className="form-label">Başlangıç Yılı</label>
+                            <input type="number" className="form-control bg-dark text-light border-secondary" value={startYear} onChange={(e) => setStartYear(e.target.value)} />
+                        </div>
+                        
+                        <div className="mb-3">
+                            <label className="form-label">Bitiş Yılı</label>
+                            <input type="number" className="form-control bg-dark text-light border-secondary" value={endYear} onChange={(e) => setEndYear(e.target.value)} />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Film Türü</label>
+                            <select className="form-select bg-dark text-light border-secondary" value={genreId} onChange={(e) => setGenreId(e.target.value)}>
+                                <option value="">Tümü</option>
+                                <option value="28">Aksiyon</option>
+                                <option value="35">Komedi</option>
+                                <option value="18">Dram</option>
+                                <option value="878">Bilim Kurgu</option>
+                                <option value="27">Korku</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="form-label">İzleme Platformu</label>
+                            <select className="form-select bg-dark text-light border-secondary" value={providerId} onChange={(e) => setProviderId(e.target.value)}>
+                                <option value="">Fark Etmez</option>
+                                <option value="8">Netflix</option>
+                                <option value="337">Disney+</option>
+                                <option value="119">Amazon Prime</option>
+                                <option value="341">BluTV</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" className="btn btn-danger w-100"><i className="bi bi-search"></i> Filmleri Getir</button>
+                    </form>
+                </div>
+            </div>
+
+            {/* SAĞ PANEL: FİLM SONUÇLARI */}
+            <div className="col-md-9">
+                <h4 className="text-light mb-4">Keşif Sonuçları</h4>
+                {loading ? (
+                    <div className="text-light">Yükleniyor...</div>
+                ) : (
+                    <div className="row g-4">
+                        {movies.length === 0 && <p className="text-muted">Aradığınız kriterlere uygun film bulunamadı.</p>}
+                        {movies.map(movie => (
+                            <div key={movie.id} className="col-md-4 col-lg-3">
+                                <Link to={`/movie/${movie.id}`} state={{ movie }} className="text-decoration-none">
+                                    <div className="card h-100 bg-dark text-white shadow-sm" style={{ cursor: 'pointer', border: 'none', transition: 'transform 0.2s' }} 
+                                         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                                        <img 
+                                            src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image'} 
+                                            className="card-img-top rounded" 
+                                            alt={movie.title} 
+                                        />
+                                        <div className="card-body p-2 text-center">
+                                            <h6 className="card-title text-truncate mb-1">{movie.title}</h6>
+                                            <span className="badge bg-danger"><i className="bi bi-star-fill text-warning"></i> {movie.vote_average.toFixed(1)}</span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+export default Discover;
+
+
+
+=========================================
+DOSYA: src\pages\Onboarding.jsx
+=========================================
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
+
+function Onboarding() {
+    const [movies, setMovies] = useState([]);
+    const [selectedMovieIds, setSelectedMovieIds] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // C# API'den rastgele 45 filmi getir
+        api.get('/Movies/onboarding')
+           .then(res => {
+               setMovies(res.data);
+               setLoading(false);
+           })
+           .catch(err => {
+               console.error(err);
+               setLoading(false);
+           });
+    }, []);
+
+    const toggleMovieSelection = (movieId) => {
+        if (selectedMovieIds.includes(movieId)) {
+            setSelectedMovieIds(selectedMovieIds.filter(id => id !== movieId));
+        } else {
+            setSelectedMovieIds([...selectedMovieIds, movieId]);
+        }
+    };
+
+    // TMDB Tür Kodları Sözlüğü
+    const TMDB_GENRES = { 
+        28: "Aksiyon", 12: "Macera", 16: "Animasyon", 35: "Komedi", 80: "Suç", 
+        99: "Belgesel", 18: "Dram", 10751: "Aile", 14: "Fantastik", 36: "Tarih", 
+        27: "Korku", 10402: "Müzik", 9648: "Gizem", 10749: "Romantik", 
+        878: "Bilim Kurgu", 10770: "TV Filmi", 53: "Gerilim", 10752: "Savaş", 37: "Vahşi Batı" 
+    };
+
+    const handleProfileSubmit = async () => {
+        if (selectedMovieIds.length < 3) {
+            alert("Sizi daha iyi tanıyabilmemiz için lütfen en az 3 film seçin!");
+            return;
+        }
+
+        try {
+            // 1. Seçilen filmlerin tüm bilgilerini (özellikle tür kodlarını) filtrele
+            const selectedMoviesData = movies.filter(m => selectedMovieIds.includes(m.id));
+            
+            // 2. Türlerin kaçar defa geçtiğini sayacak boş bir sayaç
+            const genreCounts = {};
+            selectedMoviesData.forEach(movie => {
+                movie.genre_ids.forEach(gId => {
+                    genreCounts[gId] = (genreCounts[gId] || 0) + 1;
+                });
+            });
+
+            // 3. En çok tekrar eden türü (Max) bul
+            let topGenreId = null;
+            let maxCount = 0;
+            for (const [gId, count] of Object.entries(genreCounts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    topGenreId = parseInt(gId);
+                }
+            }
+
+            const topGenreName = TMDB_GENRES[topGenreId] || "Bilinmiyor";
+
+            // 4. Analiz sonucunu C# API'ye (Veritabanına) kaydetmesi için yolla!
+            await api.post('/Interactions/taste-profile', {
+                favoriteGenreId: topGenreId,
+                favoriteGenreName: topGenreName
+            });
+
+            alert(`Mükemmel zevkleriniz var! En çok sevdiğiniz tür: ${topGenreName} \n\nZevk profiliniz başarıyla kaydedildi.`);
+            navigate('/'); // İşlem bitince ana sayfaya dön
+
+        } catch (error) {
+            if (error.response?.status === 401) {
+                alert("Lütfen önce sisteme giriş yapın (Login). Çünkü profilinizi kaydedebilmek için sizi tanımalıyız!");
+                navigate('/login');
+            } else {
+                console.error("Zevk profili kaydedilirken hata:", error);
+                alert("Bir hata oluştu.");
+            }
+        }
+    };
+
+    return (
+        <div className="container mt-4 mb-5 pb-5 text-center">
+            <h2 className="text-light fw-bold mb-3"><i className="bi bi-magic text-danger"></i> Zevk Profilinizi Oluşturalım</h2>
+            <p className="text-muted fs-5 mb-5">Sizi daha iyi tanıyabilmemiz ve harika öneriler sunabilmemiz için aşağıdan sevdiğiniz filmleri seçin.</p>
+            
+            {loading ? (
+                <div className="spinner-border text-danger" role="status">
+                    <span className="visually-hidden">Yükleniyor...</span>
+                </div>
+            ) : (
+                <>
+                    <div className="row g-3 text-start mb-5">
+                        {movies.map(movie => {
+                            const isSelected = selectedMovieIds.includes(movie.id);
+                            return (
+                                <div key={movie.id} className="col-4 col-md-3 col-lg-2">
+                                    <div 
+                                        onClick={() => toggleMovieSelection(movie.id)}
+                                        className={`card bg-dark text-white h-100 ${isSelected ? 'border-success' : 'border-dark'}`}
+                                        style={{ 
+                                            cursor: 'pointer', 
+                                            borderWidth: isSelected ? '4px' : '0px',
+                                            transform: isSelected ? 'scale(0.95)' : 'scale(1)',
+                                            transition: 'all 0.2s ease-in-out',
+                                            opacity: isSelected ? 1 : 0.8
+                                        }}>
+                                        <img 
+                                            src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image'} 
+                                            className="card-img-top rounded" 
+                                            alt={movie.title} 
+                                        />
+                                        {isSelected && (
+                                            <div className="position-absolute top-0 end-0 p-2">
+                                                <i className="bi bi-check-circle-fill text-success fs-3 bg-dark rounded-circle"></i>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="position-fixed bottom-0 start-0 w-100 p-3 shadow-lg" style={{ backgroundColor: 'rgba(18, 18, 18, 0.95)', zIndex: 1000, borderTop: '1px solid #333' }}>
+                        <div className="container d-flex justify-content-between align-items-center">
+                            <span className="text-light fs-5">Seçilen Film Sayısı: <strong className="text-danger">{selectedMovieIds.length}</strong></span>
+                            <button 
+                                onClick={handleProfileSubmit} 
+                                className={`btn btn-lg ${selectedMovieIds.length >= 3 ? 'btn-danger' : 'btn-secondary disabled'}`}>
+                                Zevk Profilimi Oluştur <i className="bi bi-arrow-right-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
+export default Onboarding;
+
+
+
