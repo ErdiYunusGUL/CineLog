@@ -34,5 +34,9 @@ namespace CineLog.Business.Services
 
         // YENİ: AKILLI BİLDİRİMLER (HOME DASHBOARD)
         Task<SmartDashboardDto> GetSmartDashboardAsync(int userId);
+
+        // YENİ: CSV İÇE / DIŞA AKTARMA
+        Task<byte[]> ExportUserRatingsCsvAsync(int userId);
+        Task ImportUserRatingsCsvAsync(int userId, Stream csvStream);
     }
 }

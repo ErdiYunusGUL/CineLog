@@ -17,9 +17,19 @@ namespace CineLog.Business.Services
             _apiKey = configuration["TmdbSettings:ApiKey"] ?? "";
         }
 
-        public async Task<List<MovieDto>> GetPopularMoviesAsync()
+        public async Task<List<MovieDto>> GetPopularMoviesAsync(string timeWindow = "day")
         {
-            var requestUrl = $"{_baseUrl}/movie/popular?api_key={_apiKey}&language=en-US&page=1";
+            string requestUrl;
+            
+            if (timeWindow == "week")
+                requestUrl = $"{_baseUrl}/trending/movie/week?api_key={_apiKey}&language=en-US";
+            else if (timeWindow == "year")
+                requestUrl = $"{_baseUrl}/discover/movie?api_key={_apiKey}&language=en-US&primary_release_year={DateTime.Now.Year}&sort_by=popularity.desc";
+            else if (timeWindow == "all")
+                requestUrl = $"{_baseUrl}/movie/top_rated?api_key={_apiKey}&language=en-US"; // Tüm zamanların en iyileri
+            else
+                requestUrl = $"{_baseUrl}/movie/popular?api_key={_apiKey}&language=en-US&page=1"; // Günün popülerleri
+
 
             var response = await _httpClient.GetAsync(requestUrl);
             response.EnsureSuccessStatusCode();

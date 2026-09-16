@@ -18,11 +18,11 @@ namespace CineLog.API.Controllers
         }
 
         [HttpGet("popular")]
-        public async Task<IActionResult> GetPopularMovies()
+        public async Task<IActionResult> GetPopularMovies([FromQuery] string timeWindow = "day")
         {
             try
             {
-                var movies = await _movieService.GetPopularMoviesAsync();
+                var movies = await _movieService.GetPopularMoviesAsync(timeWindow);
                 return Ok(movies);
             }
             catch (Exception ex)

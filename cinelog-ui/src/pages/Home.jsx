@@ -12,6 +12,9 @@ function Home() {
     // YENİ: AKILLI BİLDİRİM HAFIZASI
     const [dashboardNotifications, setDashboardNotifications] = useState([]);
 
+    // YENİ: ZAMAN FİLTRESİ HAFIZASI
+    const [timeWindow, setTimeWindow] = useState('day');
+
     const [searchParams] = useSearchParams();
     const searchQuery = searchParams.get('search'); 
 
@@ -60,9 +63,9 @@ function Home() {
                     setLoading(false);
                 });
         } 
-        // Arama kelimesi yoksa (normal ana sayfadaysak) POPÜLER filmleri getir
+        // Arama kelimesi yoksa ZAMAN FİLTRESİNE GÖRE popüler filmleri getir
         else {
-            api.get('/Movies/popular')
+            api.get(`/Movies/popular?timeWindow=${timeWindow}`)
                 .then(response => {
                     setMovies(response.data);
                     setLoading(false);
@@ -72,7 +75,7 @@ function Home() {
                     setLoading(false);
                 });
         }
-    }, [searchQuery]);
+    }, [searchQuery, timeWindow]);
     
       if (loading) return <h4 className="text-center mt-5 text-danger">Filmler Yükleniyor... <div className="spinner-border text-danger"></div></h4>;
 
@@ -117,7 +120,27 @@ function Home() {
             )}
 
             {/* ESKİ: POPÜLER / ARAMA SONUÇLARI */}
-            <h4 className="text-light fw-bold mb-4">{searchQuery ? "Arama Sonuçları" : "Popüler Filmler"}</h4>
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                <h4 className="text-light fw-bold m-0">{searchQuery ? "Arama Sonuçları" : "Popüler Filmler"}</h4>
+                
+                {/* YENİ: ZAMAN FİLTRESİ BUTON GRUBU */}
+                {!searchQuery && (
+                    <div className="btn-group shadow-sm mt-3 mt-md-0" role="group">
+                        <button type="button" 
+                                className={`btn ${timeWindow === 'day' ? 'btn-danger' : 'btn-outline-danger'}`} 
+                                onClick={() => setTimeWindow('day')}>Günün</button>
+                        <button type="button" 
+                                className={`btn ${timeWindow === 'week' ? 'btn-danger' : 'btn-outline-danger'}`} 
+                                onClick={() => setTimeWindow('week')}>Haftanın</button>
+                        <button type="button" 
+                                className={`btn ${timeWindow === 'year' ? 'btn-danger' : 'btn-outline-danger'}`} 
+                                onClick={() => setTimeWindow('year')}>Yılın</button>
+                        <button type="button" 
+                                className={`btn ${timeWindow === 'all' ? 'btn-danger' : 'btn-outline-danger'}`} 
+                                onClick={() => setTimeWindow('all')}>Tüm Zamanlar</button>
+                    </div>
+                )}
+            </div>
             <div className="row row-cols-1 row-cols-md-4 g-4">
                 {movies.map(movie => (
                     <div key={movie.id} className="col">
