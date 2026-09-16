@@ -20,6 +20,9 @@ function MovieDetail() {
     
     // YENİ: ÖZEL LİSTELER HAFIZASI
     const [myLists, setMyLists] = useState([]);
+    
+    // YENİ: FRAGMAN HAFIZASI
+    const [trailerKey, setTrailerKey] = useState(null);
 
     const disqusShortname = "cinelogofficial"; 
 

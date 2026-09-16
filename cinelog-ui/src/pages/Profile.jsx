@@ -112,11 +112,42 @@ function Profile() {
                 </div>
             </div>
 
-            {/* ALL-TIME STATS BUTONU */}
-            <div className="text-center mb-5 mt-5">
-                <Link to="/profile/stats" className="btn btn-danger btn-lg px-5 py-3 shadow-lg fs-5 fw-bold text-glow" style={{ borderRadius: '30px', letterSpacing: '1px' }}>
-                    <i className="bi bi-bar-chart-steps me-2"></i> All-Time Stats (Detaylı İstatistikler)
+            {/* ALL-TIME STATS VE İÇE/DIŞA AKTAR BUTONLARI */}
+            <div className="text-center mb-5 mt-5 d-flex justify-content-center gap-3 flex-wrap">
+                <Link to="/profile/stats" className="btn btn-danger btn-lg px-4 shadow-lg fw-bold text-glow" style={{ borderRadius: '15px' }}>
+                    <i className="bi bi-bar-chart-steps me-2"></i> All-Time Stats
                 </Link>
+                
+                <button onClick={async () => {
+                    try {
+                        const response = await api.get('/Interactions/export-ratings', { responseType: 'blob' });
+                        const url = window.URL.createObjectURL(new Blob([response.data]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', 'cinelog-ratings.csv');
+                        document.body.appendChild(link);
+                        link.click();
+                    } catch(err) { alert("Dışa aktarma sırasında hata oluştu!"); }
+                }} className="btn btn-outline-success btn-lg px-4 shadow-lg fw-bold" style={{ borderRadius: '15px' }}>
+                    <i className="bi bi-cloud-arrow-down-fill me-2"></i> Puanları İndir (CSV)
+                </button>
+
+                <div>
+                    <input type="file" id="importCsv" accept=".csv" style={{display: 'none'}} onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if(!file) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                            await api.post('/Interactions/import-ratings', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+                            alert("Puanlar başarıyla sisteme aktarıldı! Lütfen sayfayı yenileyin.");
+                            window.location.reload();
+                        } catch(err) { alert("İçe aktarma sırasında hata oluştu!"); }
+                    }} />
+                    <button onClick={() => document.getElementById('importCsv').click()} className="btn btn-outline-info btn-lg px-4 shadow-lg fw-bold" style={{ borderRadius: '15px' }}>
+                        <i className="bi bi-cloud-arrow-up-fill me-2"></i> Puanları Yükle (CSV)
+                    </button>
+                </div>
             </div>
 
             {/* YENİ: VERİ BİLİMİ (TÜR İSTATİSTİKLERİ) */}

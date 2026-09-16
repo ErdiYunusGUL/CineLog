@@ -405,6 +405,73 @@ namespace CineLog.Business.Services
             return dashboard;
         }
 
+        // ==========================================
+        // YENİ: CSV İÇE/DIŞA AKTARMA (Veri Taşıma)
+        // ==========================================
+        public async Task<byte[]> ExportUserRatingsCsvAsync(int userId)
+        {
+            var reviews = await _context.Reviews.Where(r => r.UserId == userId).ToListAsync();
+            var builder = new System.Text.StringBuilder();
+            
+            // CSV Başlığı (Letterboxd formatına benzer)
+            builder.AppendLine("MovieId,Rating,Date");
+            
+            foreach (var rev in reviews)
+            {
+                builder.AppendLine($"{rev.MovieId},{rev.Rating},{rev.CreatedAt:yyyy-MM-dd}");
+            }
+            
+            return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
+        }
+
+        public async Task ImportUserRatingsCsvAsync(int userId, Stream csvStream)
+        {
+            using var reader = new StreamReader(csvStream);
+            // İlk satırı (Başlıkları) atla
+            var header = await reader.ReadLineAsync();
+            
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                
+                var parts = line.Split(',');
+                if (parts.Length >= 2 && int.TryParse(parts[0], out int movieId) && int.TryParse(parts[1], out int rating))
+                {
+                    // Film zaten puanlanmış mı kontrol et
+                    var existing = await _context.Reviews.FirstOrDefaultAsync(r => r.UserId == userId && r.MovieId == movieId);
+                    if (existing != null)
+                    {
+                        existing.Rating = rating; // Güncelle
+                    }
+                    else
+                    {
+                        // Yeni puan ekle
+                        _context.Reviews.Add(new Review 
+                        { 
+                            UserId = userId, 
+                            MovieId = movieId, 
+                            Rating = rating, 
+                            CreatedAt = DateTime.UtcNow 
+                        });
+                        
+                        // İsteğe Bağlı: Otomatik izlendi olarak da işaretleyebiliriz (WatchedHistory)
+                        var watched = await _context.WatchedHistories.FirstOrDefaultAsync(w => w.UserId == userId && w.MovieId == movieId);
+                        if (watched == null)
+                        {
+                            _context.WatchedHistories.Add(new WatchedHistory
+                            {
+                                UserId = userId,
+                                MovieId = movieId,
+                                WatchedAt = DateTime.UtcNow
+                            });
+                        }
+                    }
+                }
+            }
+            // Tüm işlemi tek seferde veritabanına kaydet
+            await _context.SaveChangesAsync();
+        }
 
     }
 }

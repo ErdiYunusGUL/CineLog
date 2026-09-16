@@ -229,6 +229,32 @@ namespace CineLog.API.Controllers
             return Ok(dashboard);
         }
 
-        
+        // ==========================================
+        // YENİ: CSV İÇE VE DIŞA AKTARMA KAPILARI
+        // ==========================================
+        [Authorize]
+        [HttpGet("export-ratings")]
+        public async Task<IActionResult> ExportRatings()
+        {
+            var userId = GetCurrentUserId();
+            var bytes = await _interactionService.ExportUserRatingsCsvAsync(userId);
+            
+            // Kullanıcının tarayıcısına dosyayı "cinelog-ratings.csv" adıyla indirtecek komut
+            return File(bytes, "text/csv", "cinelog-ratings.csv");
+        }
+
+        [Authorize]
+        [HttpPost("import-ratings")]
+        public async Task<IActionResult> ImportRatings(IFormFile file)
+        {
+            if (file == null || file.Length == 0) 
+                return BadRequest(new { message = "Lütfen bir CSV dosyası seçin." });
+
+            var userId = GetCurrentUserId();
+            using var stream = file.OpenReadStream();
+            await _interactionService.ImportUserRatingsCsvAsync(userId, stream);
+            
+            return Ok(new { message = "Puanlarınız başarıyla sisteme aktarıldı!" });
+        }
     }
 }
