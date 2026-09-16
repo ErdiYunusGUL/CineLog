@@ -17,18 +17,18 @@ namespace CineLog.Business.Services
             _apiKey = configuration["TmdbSettings:ApiKey"] ?? "";
         }
 
-        public async Task<List<MovieDto>> GetPopularMoviesAsync(string timeWindow = "day")
+        public async Task<List<MovieDto>> GetPopularMoviesAsync(string timeWindow = "day", int page = 1)
         {
             string requestUrl;
             
             if (timeWindow == "week")
-                requestUrl = $"{_baseUrl}/trending/movie/week?api_key={_apiKey}&language=en-US";
+                requestUrl = $"{_baseUrl}/trending/movie/week?api_key={_apiKey}&language=en-US&page={page}";
             else if (timeWindow == "year")
-                requestUrl = $"{_baseUrl}/discover/movie?api_key={_apiKey}&language=en-US&primary_release_year={DateTime.Now.Year}&sort_by=popularity.desc";
+                requestUrl = $"{_baseUrl}/discover/movie?api_key={_apiKey}&language=en-US&primary_release_year={DateTime.Now.Year}&sort_by=popularity.desc&page={page}";
             else if (timeWindow == "all")
-                requestUrl = $"{_baseUrl}/movie/top_rated?api_key={_apiKey}&language=en-US"; // Tüm zamanların en iyileri
+                requestUrl = $"{_baseUrl}/movie/top_rated?api_key={_apiKey}&language=en-US&page={page}"; // Tüm zamanların en iyileri
             else
-                requestUrl = $"{_baseUrl}/movie/popular?api_key={_apiKey}&language=en-US&page=1"; // Günün popülerleri
+                requestUrl = $"{_baseUrl}/movie/popular?api_key={_apiKey}&language=en-US&page={page}"; // Günün popülerleri
 
 
             var response = await _httpClient.GetAsync(requestUrl);

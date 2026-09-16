@@ -14,6 +14,8 @@ function Home() {
 
     // YENİ: ZAMAN FİLTRESİ HAFIZASI
     const [timeWindow, setTimeWindow] = useState('day');
+    // YENİ: SAYFALAMA HAFIZASI
+    const [page, setPage] = useState(1);
 
     const [searchParams] = useSearchParams();
     const searchQuery = searchParams.get('search'); 
@@ -65,7 +67,7 @@ function Home() {
         } 
         // Arama kelimesi yoksa ZAMAN FİLTRESİNE GÖRE popüler filmleri getir
         else {
-            api.get(`/Movies/popular?timeWindow=${timeWindow}`)
+            api.get(`/Movies/popular?timeWindow=${timeWindow}&page=${page}`)
                 .then(response => {
                     setMovies(response.data);
                     setLoading(false);
@@ -75,7 +77,7 @@ function Home() {
                     setLoading(false);
                 });
         }
-    }, [searchQuery, timeWindow]);
+    }, [searchQuery, timeWindow, page]);
     
       if (loading) return <h4 className="text-center mt-5 text-danger">Filmler Yükleniyor... <div className="spinner-border text-danger"></div></h4>;
 
@@ -128,16 +130,16 @@ function Home() {
                     <div className="btn-group shadow-sm mt-3 mt-md-0" role="group">
                         <button type="button" 
                                 className={`btn ${timeWindow === 'day' ? 'btn-danger' : 'btn-outline-danger'}`} 
-                                onClick={() => setTimeWindow('day')}>Günün</button>
+                                onClick={() => { setTimeWindow('day'); setPage(1); }}>Günün</button>
                         <button type="button" 
                                 className={`btn ${timeWindow === 'week' ? 'btn-danger' : 'btn-outline-danger'}`} 
-                                onClick={() => setTimeWindow('week')}>Haftanın</button>
+                                onClick={() => { setTimeWindow('week'); setPage(1); }}>Haftanın</button>
                         <button type="button" 
                                 className={`btn ${timeWindow === 'year' ? 'btn-danger' : 'btn-outline-danger'}`} 
-                                onClick={() => setTimeWindow('year')}>Yılın</button>
+                                onClick={() => { setTimeWindow('year'); setPage(1); }}>Yılın</button>
                         <button type="button" 
                                 className={`btn ${timeWindow === 'all' ? 'btn-danger' : 'btn-outline-danger'}`} 
-                                onClick={() => setTimeWindow('all')}>Tüm Zamanlar</button>
+                                onClick={() => { setTimeWindow('all'); setPage(1); }}>Tüm Zamanlar</button>
                     </div>
                 )}
             </div>
@@ -164,6 +166,24 @@ function Home() {
                     </div>
                 ))}
             </div>
+
+            {/* YENİ: SAYFALAMA (PAGINATION) KONTROLLERİ */}
+            {!searchQuery && (
+                <div className="d-flex justify-content-center mt-5 mb-5 align-items-center">
+                    <button 
+                        className="btn btn-outline-danger px-4 fw-bold shadow-sm" 
+                        disabled={page === 1} 
+                        onClick={() => setPage(p => p - 1)}>
+                        <i className="bi bi-arrow-left"></i> Önceki
+                    </button>
+                    <span className="mx-4 text-light fw-bold fs-5">Sayfa {page}</span>
+                    <button 
+                        className="btn btn-danger px-4 fw-bold shadow-sm" 
+                        onClick={() => setPage(p => p + 1)}>
+                        Sonraki <i className="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

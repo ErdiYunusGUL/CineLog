@@ -4,7 +4,7 @@ namespace CineLog.Business.Services
 {
     public interface IMovieService
     {
-        Task<List<MovieDto>> GetPopularMoviesAsync(string timeWindow = "day");
+        Task<List<MovieDto>> GetPopularMoviesAsync(string timeWindow = "day", int page = 1);
 
         // YENİ 1: Kullanıcının girdiği kelimeyi (query) TMDB'de arar.
         Task<List<MovieDto>> SearchMoviesAsync(string query);
