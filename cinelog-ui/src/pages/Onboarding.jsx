@@ -73,7 +73,7 @@ function Onboarding() {
                 favoriteGenreName: topGenreName
             });
 
-            alert(`Mükemmel zevkleriniz var! En çok sevdiğiniz tür: ${topGenreName} \n\nZevk profiliniz başarıyla kaydedildi.`);
+            alert(`Mükemmel bir sinema zevkiniz var! En çok sevdiğiniz tür: ${topGenreName} \n\nSinema profiliniz başarıyla kaydedildi.`);
             navigate('/'); // İşlem bitince ana sayfaya dön
 
         } catch (error) {
@@ -81,7 +81,7 @@ function Onboarding() {
                 alert("Lütfen önce sisteme giriş yapın (Login). Çünkü profilinizi kaydedebilmek için sizi tanımalıyız!");
                 navigate('/login');
             } else {
-                console.error("Zevk profili kaydedilirken hata:", error);
+                console.error("Sinema profili kaydedilirken hata:", error);
                 alert("Bir hata oluştu.");
             }
         }
@@ -89,7 +89,7 @@ function Onboarding() {
 
     return (
         <div className="container mt-4 mb-5 pb-5 text-center">
-            <h2 className="text-light fw-bold mb-3"><i className="bi bi-magic text-danger"></i> Zevk Profilinizi Oluşturalım</h2>
+            <h2 className="text-light fw-bold mb-3"><i className="bi bi-magic text-danger"></i> Sinema Profilinizi Oluşturalım</h2>
             <p className="text-muted fs-5 mb-5">Sizi daha iyi tanıyabilmemiz ve harika öneriler sunabilmemiz için aşağıdan sevdiğiniz filmleri seçin.</p>
             
             {loading ? (
@@ -135,7 +135,7 @@ function Onboarding() {
                             <button 
                                 onClick={handleProfileSubmit} 
                                 className={`btn btn-lg ${selectedMovieIds.length >= 3 ? 'btn-danger' : 'btn-secondary disabled'}`}>
-                                Zevk Profilimi Oluştur <i className="bi bi-arrow-right-circle"></i>
+                                Sinema Profilimi Oluştur <i className="bi bi-arrow-right-circle"></i>
                             </button>
                         </div>
                     </div>

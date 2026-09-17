@@ -51,7 +51,7 @@ function App() {
                 <Link className="nav-link text-info ms-4" to="/community"><i className="bi bi-people-fill"></i> Topluluk</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link text-warning ms-4" to="/onboarding"><i className="bi bi-magic"></i> Zevk Analizi</Link>
+                <Link className="nav-link text-warning ms-4" to="/onboarding"><i className="bi bi-magic"></i> Sinema Profili</Link>
               </li>
             </ul>
             
