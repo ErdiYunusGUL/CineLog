@@ -1,13 +1,10 @@
 import axios from 'axios';
 
-// Backend (C#) API'mizin çalıştığı adres (Dün tarayıcıda açtığımız port)
-const API_URL = 'https://pelt-corsage-unsorted.ngrok-free.dev/api';
+// Backend (C#) API'mizin çalıştığı Render.com Bulut Sunucusu Adresi
+const API_URL = 'https://cinelog-e4mh.onrender.com/api';
 
 const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'ngrok-skip-browser-warning': 'true'
-    }
+    baseURL: API_URL
 });
 
 // Gönderilen her kargonun (isteğin) içine Yaka Kartımızı (Token) otomatik ekleyen kurye
