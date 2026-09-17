@@ -90,7 +90,7 @@ function Onboarding() {
     return (
         <div className="container mt-4 mb-5 pb-5 text-center">
             <h2 className="text-light fw-bold mb-3"><i className="bi bi-magic text-danger"></i> Sinema Profilinizi Oluşturalım</h2>
-            <p className="text-muted fs-5 mb-5">Sizi daha iyi tanıyabilmemiz ve harika öneriler sunabilmemiz için aşağıdan sevdiğiniz filmleri seçin.</p>
+            <p className="text-light opacity-75 fs-5 mb-5">Sizi daha iyi tanıyabilmemiz ve harika öneriler sunabilmemiz için aşağıdan sevdiğiniz filmleri seçin.</p>
             
             {loading ? (
                 <div className="spinner-border text-danger" role="status">
