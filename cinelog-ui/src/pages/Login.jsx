@@ -6,17 +6,20 @@ function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
         try {
             const response = await api.post('/Auth/login', { email, password });
             localStorage.setItem('token', response.data.token);
-            // Anasayfaya yönlendir ve sayfayı yenile ki üst menü güncellensin
             window.location.href = "/"; 
         } catch (err) {
             setError(err.response?.data?.message || "Giriş başarısız.");
+            setLoading(false);
         }
     };
 
@@ -38,7 +41,11 @@ function Login() {
                                 <input type="password" className="form-control bg-dark text-light border-secondary" required 
                                     value={password} onChange={(e) => setPassword(e.target.value)} />
                             </div>
-                            <button type="submit" className="btn btn-danger w-100">Giriş Yap</button>
+                            <button type="submit" className="btn btn-danger w-100" disabled={loading}>
+                                {loading ? (
+                                    <span><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Giriş Yapılıyor...</span>
+                                ) : "Giriş Yap"}
+                            </button>
                         </form>
                     </div>
                 </div>
