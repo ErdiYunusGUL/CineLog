@@ -22,6 +22,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<CineLog.Business.Services.IAuthService, CineLog.Business.Services.AuthService>();
 builder.Services.AddScoped<CineLog.Business.Services.IInteractionService, CineLog.Business.Services.InteractionService>();
 builder.Services.AddScoped<CineLog.Business.Services.ICommunityService, CineLog.Business.Services.CommunityService>();
+builder.Services.AddScoped<CineLog.Business.Services.IAiService, CineLog.Business.Services.AiService>();
 
 
 // DbContext (PostgreSQL)
@@ -62,6 +63,10 @@ if (app.Environment.IsDevelopment())
     {
         var db = scope.ServiceProvider.GetRequiredService<CineLog.DataAccess.Context.AppDbContext>();
         db.Database.EnsureCreated(); // Tabloları PostgreSQL'de otomatik açar
+        
+        try {
+            db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"AiTasteAnalysis\" text NULL;");
+        } catch { } // Sütun zaten varsa hata vermesin
     }
 
     app.MapOpenApi();

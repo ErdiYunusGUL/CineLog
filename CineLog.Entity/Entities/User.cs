@@ -1,4 +1,4 @@
-﻿namespace CineLog.Entity.Entities
+namespace CineLog.Entity.Entities
 {
     public class User
     {
@@ -12,6 +12,9 @@
         // YENİ: Kullanıcının zevk profili (Onboarding sonrası dolacak)
         public int? FavoriteGenreId { get; set; }
         public string? FavoriteGenreName { get; set; }
+        
+        // YENİ: Yapay Zeka tarafından oluşturulmuş Psikolojik Sinema Analizi metni
+        public string? AiTasteAnalysis { get; set; }
 
         // Bir kullanıcının birden fazla yorumu ve favorisi olabilir (İlişki)
         public List<Review> Reviews { get; set; } = new List<Review>();

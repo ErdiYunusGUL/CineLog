@@ -8,10 +8,12 @@ namespace CineLog.Business.Services
     public class InteractionService : IInteractionService
     {
         private readonly AppDbContext _context;
+        private readonly IAiService _aiService;
 
-        public InteractionService(AppDbContext context)
+        public InteractionService(AppDbContext context, IAiService aiService)
         {
             _context = context;
+            _aiService = aiService;
         }
 
         public async Task AddReviewAsync(int userId, AddReviewDto dto)
@@ -78,12 +80,31 @@ namespace CineLog.Business.Services
         public async Task SaveTasteProfileAsync(int userId, TasteProfileDto dto)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user != null)
+            if (user == null) throw new Exception("Kullanıcı bulunamadı.");
+
+            user.FavoriteGenreId = dto.FavoriteGenreId;
+            user.FavoriteGenreName = dto.FavoriteGenreName;
+            
+            // YENİ: Kullanıcının son izlediği filmleri getir
+            var recentMovies = await _context.WatchedHistories
+                .Where(w => w.UserId == userId)
+                .OrderByDescending(w => w.WatchedAt)
+                .Take(5)
+                .Select(w => w.MovieTitle)
+                .ToListAsync();
+
+            if (recentMovies.Count > 0)
             {
-                user.FavoriteGenreId = dto.FavoriteGenreId;
-                user.FavoriteGenreName = dto.FavoriteGenreName;
-                await _context.SaveChangesAsync();
+                // YENİ: Yapay Zekadan (Gemini) psikolojik analiz iste
+                user.AiTasteAnalysis = await _aiService.GetTasteAnalysisAsync(dto.FavoriteGenreName, recentMovies);
             }
+            else
+            {
+                user.AiTasteAnalysis = $"Kayıtlarımıza göre {dto.FavoriteGenreName} türünü seviyorsun. Daha fazla film izledikçe senin için çok daha detaylı psikolojik sinema analizleri yapacağım!";
+            }
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
         }
 
         // YENİ: Kullanıcının veritabanındaki zevk profilini (Varsa) geri döndürür
@@ -95,7 +116,8 @@ namespace CineLog.Business.Services
                 return new TasteProfileDto
                 {
                     FavoriteGenreId = user.FavoriteGenreId.Value,
-                    FavoriteGenreName = user.FavoriteGenreName
+                    FavoriteGenreName = user.FavoriteGenreName,
+                    AiTasteAnalysis = user.AiTasteAnalysis
                 };
             }
             return null; // Henüz zevk analizi yapmamışsa boş döner
@@ -216,6 +238,7 @@ namespace CineLog.Business.Services
             {
                 taste.FavoriteGenreId = user.FavoriteGenreId.Value;
                 taste.FavoriteGenreName = user.FavoriteGenreName ?? "";
+                taste.AiTasteAnalysis = user.AiTasteAnalysis;
             }
 
             // 2. İzleme Listesi ve Geçmişini tarihe göre (en son eklenen en üstte) çek

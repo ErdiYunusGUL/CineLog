@@ -364,8 +364,44 @@ function MovieDetail() {
                     </div>
                 </div>
 
+                {/* YENİ: YAPAY ZEKA YORUM ÖZETLEYİCİ */}
+                <h4 className="text-light mb-4 mt-5"><i className="bi bi-chat-left-text text-danger"></i> Yorumlar (The Movie Database)</h4>
+                
+                <div className="card bg-dark p-3 mb-4 border-secondary border-0 shadow-lg" style={{ background: 'linear-gradient(145deg, #1f1f1f, #121212)' }}>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h5 className="text-light fw-bold m-0"><i className="bi bi-magic text-danger"></i> AI İnceleme Özeti</h5>
+                            <small className="text-muted">Bu film için TMDB üzerindeki yorumları okumaya üşeniyor musunuz?</small>
+                        </div>
+                        <button 
+                            className="btn btn-danger btn-sm px-3 shadow"
+                            id="aiSummarizeBtn"
+                            onClick={async (e) => {
+                                const btn = e.currentTarget;
+                                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Özetleniyor...';
+                                btn.disabled = true;
+                                try {
+                                    const res = await api.get(`/Ai/summarize/${movie.id}`);
+                                    document.getElementById('aiSummaryResult').innerHTML = res.data.response;
+                                    document.getElementById('aiSummaryResultBox').style.display = 'block';
+                                } catch(err) {
+                                    alert("Özetleme başarısız oldu.");
+                                } finally {
+                                    btn.innerHTML = '<i class="bi bi-magic"></i> Özetle';
+                                    btn.disabled = false;
+                                }
+                            }}
+                        >
+                            <i className="bi bi-magic"></i> Özetle
+                        </button>
+                    </div>
+                    <div id="aiSummaryResultBox" className="alert alert-secondary border-0 mt-3 mb-0" style={{ display: 'none', backgroundColor: '#2a2a2a', color: '#e0e0e0' }}>
+                        <i className="bi bi-info-circle-fill text-danger me-2"></i>
+                        <span id="aiSummaryResult" style={{ fontStyle: 'italic' }}></span>
+                    </div>
+                </div>
+
                 {/* DISQUS NATIVE ALANI */}
-                <h4 className="text-light mb-4"><i className="bi bi-chat-left-text text-danger"></i> Yorumlar</h4>
                 <div className="bg-light p-3 rounded" id="disqus_thread"></div>
 
             </div>

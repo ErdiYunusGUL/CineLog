@@ -25,6 +25,7 @@ namespace CineLog.Entity.DTOs
     {
         public int FavoriteGenreId { get; set; }
         public string FavoriteGenreName { get; set; } = string.Empty;
+        public string? AiTasteAnalysis { get; set; }
     }
 
     public class AddMovieInteractionDto

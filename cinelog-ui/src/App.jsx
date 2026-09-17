@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import Community from './pages/Community';
 import PublicProfile from './pages/PublicProfile'; // EKLENDİ
 import Stats from './pages/Stats';
+import CineBot from './components/CineBot'; // EKLENDİ
 import api from './api';
 
 function App() {
@@ -92,6 +93,8 @@ function App() {
           <Route path="/profile/stats" element={<Stats />} />
         </Routes>
       </div>
+
+      <CineBot />
     </Router>
   );
 }

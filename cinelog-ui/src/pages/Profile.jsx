@@ -150,6 +150,22 @@ function Profile() {
                 </div>
             </div>
 
+            {/* YENİ: YAPAY ZEKA ZEVK ANALİZİ */}
+            {profileData.tasteProfile && profileData.tasteProfile.aiTasteAnalysis && (
+                <div className="card bg-dark p-4 mb-5 border-0 shadow-lg" style={{ borderRadius: '20px', background: 'linear-gradient(145deg, #1f1f1f, #121212)', borderLeft: '5px solid #e50914' }}>
+                    <div className="d-flex align-items-center mb-3">
+                        <i className="bi bi-robot fs-2 text-danger me-3" style={{ animation: 'pulse 2s infinite' }}></i>
+                        <h4 className="fw-bold m-0 text-glow">Yapay Zeka Psikolojik Analizi</h4>
+                    </div>
+                    <p className="text-light opacity-75 fs-5 fst-italic" style={{ lineHeight: '1.8' }}>
+                        "{profileData.tasteProfile.aiTasteAnalysis}"
+                    </p>
+                    <div className="text-end">
+                        <small className="text-danger fw-bold"><i className="bi bi-lightning-charge-fill"></i> Powered by Gemini AI</small>
+                    </div>
+                </div>
+            )}
+
             {/* YENİ: VERİ BİLİMİ (TÜR İSTATİSTİKLERİ) */}
             {profileData.genreAverageRatings && Object.keys(profileData.genreAverageRatings).length > 0 && (
                 <div className="mb-5">
