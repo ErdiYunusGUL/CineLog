@@ -13,6 +13,9 @@ namespace CineLog.Entity.Entities
         public int? FavoriteGenreId { get; set; }
         public string? FavoriteGenreName { get; set; }
         
+        // YENİ: RBAC (Yetki Bazlı Erişim) için Rol tanımlaması. Varsayılan: User
+        public string Role { get; set; } = "User";
+        
         // YENİ: Yapay Zeka tarafından oluşturulmuş Psikolojik Sinema Analizi metni
         public string? AiTasteAnalysis { get; set; }
 

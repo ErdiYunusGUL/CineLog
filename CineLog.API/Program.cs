@@ -7,7 +7,7 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. CORS SIKILAŞTIRMASI (Security Misconfiguration Önlemi)
+// 1. CORS SIKILA�TIRMASI
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
@@ -26,7 +26,6 @@ builder.Services.AddScoped<CineLog.Business.Services.IInteractionService, CineLo
 builder.Services.AddScoped<CineLog.Business.Services.ICommunityService, CineLog.Business.Services.CommunityService>();
 builder.Services.AddScoped<CineLog.Business.Services.IAiService, CineLog.Business.Services.AiService>();
 
-
 // DbContext (PostgreSQL)
 builder.Services.AddDbContext<CineLog.DataAccess.Context.AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -35,7 +34,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient<CineLog.Business.Services.IMovieService, CineLog.Business.Services.MovieService>();
 builder.Services.AddOpenApi();
 
-// JWT Authentication Doğrulama Ayarları
+// JWT Authentication Do�rulama
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? "default_secret_key_if_missing_but_shouldnt_be";
 
@@ -56,7 +55,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// 2. DDoS VE BRUTE FORCE KORUMASI (Rate Limiting - WAF Simülasyonu)
+// 2. DDoS VE BRUTE FORCE KORUMASI (Rate Limiting)
 builder.Services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
@@ -65,7 +64,7 @@ builder.Services.AddRateLimiter(options =>
             factory: partition => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 100, // 1 dakikada max 100 istek (Kendi çapımızda WAF)
+                PermitLimit = 100, // 1 dakikada max 100 istek
                 QueueLimit = 0,
                 Window = TimeSpan.FromMinutes(1)
             }));
@@ -73,53 +72,47 @@ builder.Services.AddRateLimiter(options =>
     options.OnRejected = async (context, token) =>
     {
         context.HttpContext.Response.StatusCode = 429;
-        await context.HttpContext.Response.WriteAsync("Çok fazla istek attınız. Lütfen biraz bekleyin. (DDoS Koruması Aktif)", cancellationToken: token);
+        await context.HttpContext.Response.WriteAsync("Cok fazla istek attiniz. Lutfen biraz bekleyin.", cancellationToken: token);
     };
 });
 
 var app = builder.Build();
 
+// Veritaban� ve �ema G�ncellemeleri
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CineLog.DataAccess.Context.AppDbContext>();
+    db.Database.EnsureCreated(); // Tablolar� a�ar
+    
+    try {
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"AiTasteAnalysis\" text NULL;");
+        db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"Role\" text NOT NULL DEFAULT 'User';");
+        db.Database.ExecuteSqlRaw("UPDATE \"Users\" SET \"Role\" = 'Admin' WHERE \"Username\" = 'erdi.gul' OR \"Email\" LIKE '%erdi%';");
+    } catch { } // S�tun zaten varsa hata vermesin
+}
+
 if (app.Environment.IsDevelopment())
 {
-    // UYGULAMA BAŞLARKEN VERİTABANINI OTOMATİK OLUŞTUR (POSTGRESQL İÇİN SIFIRDAN)
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<CineLog.DataAccess.Context.AppDbContext>();
-        db.Database.EnsureCreated(); // Tabloları PostgreSQL'de otomatik açar
-        
-        try {
-            db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"AiTasteAnalysis\" text NULL;");
-        } catch { } // Sütun zaten varsa hata vermesin
-    }
-
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// 3. HTTP GÜVENLİK BAŞLIKLARI (Security Headers Middleware)
+// 3. HTTP G�VENL�K BA�LIKLARI
 app.Use(async (context, next) =>
 {
-    // Clickjacking koruması (Siteyi iframe içine gömmelerini engeller)
     context.Response.Headers.Append("X-Frame-Options", "DENY");
-    // MIME type sniffing engelleme
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-    // Cross-Site Scripting (XSS) koruması tarayıcı ayarı
     context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
-    // Strict Transport Security (HSTS) - Tarayıcıyı HTTPS kullanmaya zorlar
     context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    // Content Security Policy (Çok basit seviye)
     context.Response.Headers.Append("Content-Security-Policy", "default-src 'self' 'unsafe-inline' https://api.themoviedb.org https://generativelanguage.googleapis.com; img-src 'self' data: https://image.tmdb.org https://ui-avatars.com https://via.placeholder.com;");
-
     await next();
 });
 
-// app.UseHttpsRedirection(); 
-app.UseRateLimiter(); // WAF Simülasyonunu devreye al
+app.UseRateLimiter(); 
 app.UseCors("AllowReact");
 app.UseAuthentication(); 
 app.UseAuthorization();  
 
 app.MapControllers();
-
 app.Run();

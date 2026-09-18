@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using CineLog.DataAccess.Context;
@@ -73,11 +73,12 @@ namespace CineLog.Business.Services
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"] ?? throw new Exception("SecretKey bulunamadı!");
 
-            // Kartın içine yazılacak bilgiler (Sadece ID ve Username)
+            // Kartın içine yazılacak bilgiler (ID, Username ve YENİ: ROLE)
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
+                new Claim(ClaimTypes.Role, user.Role), // RBAC için kritik satır!
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
