@@ -2,15 +2,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS ayarı (React projemizin API'ye istek atabilmesi için)
+// 1. CORS SIKILAŞTIRMASI (Security Misconfiguration Önlemi)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
     {
-        policy.AllowAnyOrigin() // Vercel'den ve her yerden gelecek isteklere izin ver
+        policy.WithOrigins("https://keen-palmier-cfc30a.netlify.app", "http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -54,6 +56,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// 2. DDoS VE BRUTE FORCE KORUMASI (Rate Limiting - WAF Simülasyonu)
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 100, // 1 dakikada max 100 istek (Kendi çapımızda WAF)
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+            
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsync("Çok fazla istek attınız. Lütfen biraz bekleyin. (DDoS Koruması Aktif)", cancellationToken: token);
+    };
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -74,14 +97,29 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// CORS ve Güvenlik
-// app.UseHttpsRedirection(); // Ngrok HTTP tünellemesini bozduğu için kapatıldı
+// 3. HTTP GÜVENLİK BAŞLIKLARI (Security Headers Middleware)
+app.Use(async (context, next) =>
+{
+    // Clickjacking koruması (Siteyi iframe içine gömmelerini engeller)
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    // MIME type sniffing engelleme
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    // Cross-Site Scripting (XSS) koruması tarayıcı ayarı
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    // Strict Transport Security (HSTS) - Tarayıcıyı HTTPS kullanmaya zorlar
+    context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    // Content Security Policy (Çok basit seviye)
+    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self' 'unsafe-inline' https://api.themoviedb.org https://generativelanguage.googleapis.com; img-src 'self' data: https://image.tmdb.org https://ui-avatars.com https://via.placeholder.com;");
+
+    await next();
+});
+
+// app.UseHttpsRedirection(); 
+app.UseRateLimiter(); // WAF Simülasyonunu devreye al
 app.UseCors("AllowReact");
-app.UseAuthentication(); // Kimlik doğrulama (Yaka Kartı kontrolü)
-app.UseAuthorization();  // Yetki doğrulama
+app.UseAuthentication(); 
+app.UseAuthorization();  
 
 app.MapControllers();
-
-app.Run();
 
 app.Run();
