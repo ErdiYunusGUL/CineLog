@@ -11,8 +11,10 @@ import Profile from './pages/Profile';
 import Community from './pages/Community';
 import PublicProfile from './pages/PublicProfile';
 import Stats from './pages/Stats';
-import AdminDashboard from './pages/AdminDashboard'; // YENÝ
+import AdminDashboard from './pages/AdminDashboard';
+import AIMatchmaker from './pages/AIMatchmaker';
 import CineBot from './components/CineBot';
+import { Header1 } from './components/ui/header'; // YENÄ° MODERN HEADER
 import api from './api';
 
 function App() {
@@ -23,7 +25,6 @@ function App() {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // Microsoft Role Claim Type'ý "role" veya uzun schema adý olarak gelebiliyor
         const userRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'User';
         setUser({ username: decoded.unique_name, role: userRole });
       } catch (error) {
@@ -40,51 +41,10 @@ function App() {
 
   return (
     <Router>
-      <nav className="navbar navbar-expand-lg navbar-dark navbar-glass mb-4 sticky-top shadow-sm py-3">
-        <div className="container">
-          <Link className="navbar-brand text-danger fw-bold fs-4 text-glow" to="/"><i className="bi bi-film"></i> CineLog</Link>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav me-auto">
-              <li className="nav-item">
-                <Link className="nav-link text-light ms-4" to="/discover"><i className="bi bi-compass"></i> Keþfet</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link text-info ms-4" to="/community"><i className="bi bi-people-fill"></i> Topluluk</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link text-warning ms-4" to="/onboarding"><i className="bi bi-magic"></i> Sinema Profili</Link>
-              </li>
-            </ul>
-            
-            <form className="d-flex me-4 w-50" onSubmit={(e) => { e.preventDefault(); window.location.href = `/?search=${e.target.search.value}`; }}>
-              <input name="search" className="form-control form-control-sm bg-dark text-light border-secondary" type="search" placeholder="Film Ara..." aria-label="Search" />
-              <button className="btn btn-outline-danger btn-sm ms-2" type="submit"><i className="bi bi-search"></i></button>
-            </form>
+      {/* 21st.dev Tailwind + Shadcn Modern Header */}
+      <Header1 user={user} handleLogout={handleLogout} />
 
-            {user ? (
-              <div className="d-flex align-items-center">
-                {user.role === 'Admin' && (
-                  <Link className="btn btn-danger btn-sm me-3 fw-bold" to="/admin">
-                      <i className="bi bi-shield-lock-fill"></i> Admin Paneli
-                  </Link>
-                )}
-                <Link className="btn btn-outline-info btn-sm me-3" to="/profile">
-                    <i className="bi bi-person-circle"></i> Profilim
-                </Link>
-                <span className="text-light me-3">Hoþgeldin, {user.username}</span>
-                <button className="btn btn-outline-light btn-sm" onClick={handleLogout}>Çýkýþ Yap</button>
-              </div>
-            ) : (
-              <div className="d-flex align-items-center flex-shrink-0">
-                <Link to="/login" className="btn btn-outline-danger btn-sm me-2">Giriþ Yap</Link>
-                <Link to="/register" className="btn btn-danger btn-sm">Kayýt Ol</Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      <div className="container mt-4 mb-5">
+      <div className="container mt-24 mb-5 pt-5">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login setAuthUser={setUser} />} />
@@ -94,6 +54,7 @@ function App() {
           <Route path="/community" element={<Community />} />
           <Route path="/user/:id" element={<PublicProfile />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/matchmaker" element={<AIMatchmaker />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/stats" element={<Stats />} />
           <Route path="/admin" element={<AdminDashboard user={user} />} />

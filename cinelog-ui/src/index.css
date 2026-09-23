@@ -1,32 +1,52 @@
-/* CineLog Dark Theme Variables */
-:root {
-  --bg-dark: #121212;
-  --bg-card: #1e1e1e;
-  --text-light: #f5f5f5;
-  --text-muted: #a0a0a0;
-  --accent-color: #e50914; /* Netflix kırmızısı tadında bir sinema rengi */
-  --accent-hover: #b20710;
+﻿@import "tailwindcss";
+
+@theme {
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  --color-card: #18181b;
+  --color-card-foreground: #fafafa;
+  --color-popover: #18181b;
+  --color-popover-foreground: #fafafa;
+  --color-primary: #e50914; /* Netflix Red */
+  --color-primary-foreground: #fafafa;
+  --color-secondary: #27272a;
+  --color-secondary-foreground: #fafafa;
+  --color-muted: #27272a;
+  --color-muted-foreground: #a1a1aa;
+  --color-accent: #27272a;
+  --color-accent-foreground: #fafafa;
+  --color-destructive: #7f1d1d;
+  --color-destructive-foreground: #fafafa;
+  --color-border: #27272a;
+  --color-input: #27272a;
+  --color-ring: #e50914;
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
 }
 
-body {
-  background-color: var(--bg-dark);
-  color: var(--text-light);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  padding: 0;
+@layer base {
+  body {
+    background-color: var(--color-background) !important;
+    color: var(--color-foreground) !important;
+  }
 }
 
-/* Scrollbar (Kaydırma çubuğu) bile karanlık olsun */
+/* CineLog Core Overrides */
+a {
+  text-decoration: none !important;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark); 
+  background: var(--color-background); 
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-card); 
+  background: var(--color-secondary); 
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color); 
+  background: var(--color-primary); 
 }

@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # 1. VERİTABANI (POSTGRESQL)
+  db:
+    image: postgres:15-alpine
+    container_name: cinelog-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: SecretPassword123!
+      POSTGRES_DB: CineLogDB
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - cinelog-network
+
+  # 2. ARKA UÇ (BACKEND - .NET API)
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: cinelog-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=CineLogDB;Username=admin;Password=SecretPassword123!
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - cinelog-network
+
+  # 3. ÖN UÇ (FRONTEND - REACT)
+  ui:
+    build:
+      context: ./cinelog-ui
+      dockerfile: Dockerfile
+    container_name: cinelog-ui
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    networks:
+      - cinelog-network
+
+volumes:
+  pgdata: # Veritabanı verilerinin silinmemesi için kalıcı hafıza (Flash Bellek)
+
+networks:
+  cinelog-network: # Üç kutunun da birbiriyle konuşabilmesi için özel iç ağ
+    driver: bridge
