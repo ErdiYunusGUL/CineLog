@@ -136,11 +136,11 @@ function Profile() {
         setImportLoading(true);
         // Çok hızlı olması ve sistemi yormaması için demo amaçlı ilk 20 filmi işliyoruz.
         const moviesToProcess = importPreview.slice(0, 20);
-        let csvContent = "MovieId,Rating\n";
         let foundCount = 0;
 
         for (const movie of moviesToProcess) {
             try {
+                // 1. TMDB'den filmi bul
                 const res = await api.get(`/Movies/search?query=${encodeURIComponent(movie.title)}`);
                 if (res.data && res.data.length > 0) {
                     let matched = res.data[0];
@@ -148,11 +148,39 @@ function Profile() {
                         const yearMatch = res.data.find(m => m.releaseDate && m.releaseDate.startsWith(movie.year));
                         if (yearMatch) matched = yearMatch;
                     }
-                    csvContent += `${matched.id},5\n`; // Varsayılan puan
+
+                    // 2. Film Kadrosunu (Director/Actor) çek (Analitik için zorunlu!)
+                    let director = "Bilinmiyor";
+                    let leadActor = "Bilinmiyor";
+                    try {
+                        const credRes = await api.get(`/Movies/${matched.id}/credits`);
+                        const credits = credRes.data;
+                        director = credits?.crew?.find(c => c.job === 'Director')?.name || "Bilinmiyor";
+                        leadActor = credits?.cast?.[0]?.name || "Bilinmiyor";
+                    } catch(err) {
+                        console.error("Kadro çekilemedi:", movie.title);
+                    }
+
+                    const releaseYear = matched.releaseDate ? parseInt(matched.releaseDate.substring(0, 4)) : 0;
+                    const poster = matched.posterPath || "";
+                    const genre = matched.genreIds && matched.genreIds.length > 0 ? matched.genreIds[0] : 0;
+
+                    // 3. Analitik verileriyle birlikte doğrudan "İzlendi" olarak kaydet
+                    await api.post('/Interactions/watched', {
+                        movieId: matched.id,
+                        movieTitle: matched.title,
+                        posterPath: poster,
+                        mainGenreId: genre,
+                        runtimeMinutes: 120, // Ortalama 120dk
+                        director: director,
+                        leadActor: leadActor,
+                        releaseYear: releaseYear
+                    });
+
                     foundCount++;
                 }
             } catch(err) {
-                console.error("TMDB Hatası", movie.title);
+                console.error("TMDB veya Kayıt Hatası", movie.title);
             }
         }
 
@@ -162,18 +190,8 @@ function Profile() {
             return;
         }
 
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const formData = new FormData();
-        formData.append("file", blob, "mapped.csv");
-
-        try {
-            await api.post('/Interactions/import-ratings', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
-            alert(`Sihir Gerçekleşti! TMDB üzerinden ${foundCount} film eşleştirildi ve veritabanınıza GERÇEK anlamda kaydedildi! (Demo Limiti: 20)`);
-            window.location.reload();
-        } catch(err) {
-            alert("Sisteme aktarma sırasında hata oluştu!");
-            setImportLoading(false);
-        }
+        alert(`Mükemmel! TMDB üzerinden ${foundCount} film TÜM KADRO (Yönetmen/Başrol/Yıl) bilgileriyle eşleştirilip analiz motoruna başarıyla işlendi!`);
+        window.location.reload();
     };
 
     return (
