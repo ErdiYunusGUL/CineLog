@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 
@@ -132,16 +132,48 @@ function Profile() {
         reader.readAsText(file);
     };
 
-    const confirmImport = () => {
-        // Normalde bu backend'e (örn: /Interactions/bulk-import) bir array olarak yollanır
-        // Ancak mockup amaçlı sadece UI'de gösterip kapatacağız. 
+    const confirmImport = async () => {
         setImportLoading(true);
-        setTimeout(() => {
-            alert(`Tebrikler! ${importPreview.length} adet film başarıyla geçmişinize eklendi! (Demo)`);
+        // Çok hızlı olması ve sistemi yormaması için demo amaçlı ilk 20 filmi işliyoruz.
+        const moviesToProcess = importPreview.slice(0, 20);
+        let csvContent = "MovieId,Rating\n";
+        let foundCount = 0;
+
+        for (const movie of moviesToProcess) {
+            try {
+                const res = await api.get(`/Movies/search?query=${encodeURIComponent(movie.title)}`);
+                if (res.data && res.data.length > 0) {
+                    let matched = res.data[0];
+                    if (movie.year && movie.year !== "Bilinmiyor") {
+                        const yearMatch = res.data.find(m => m.releaseDate && m.releaseDate.startsWith(movie.year));
+                        if (yearMatch) matched = yearMatch;
+                    }
+                    csvContent += `${matched.id},5\n`; // Varsayılan puan
+                    foundCount++;
+                }
+            } catch(err) {
+                console.error("TMDB Hatası", movie.title);
+            }
+        }
+
+        if (foundCount === 0) {
+            alert("Eşleşme bulunamadı!");
             setImportLoading(false);
-            setShowImportModal(false);
-            setImportPreview([]);
-        }, 1500);
+            return;
+        }
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const formData = new FormData();
+        formData.append("file", blob, "mapped.csv");
+
+        try {
+            await api.post('/Interactions/import-ratings', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+            alert(`Sihir Gerçekleşti! TMDB üzerinden ${foundCount} film eşleştirildi ve veritabanınıza GERÇEK anlamda kaydedildi! (Demo Limiti: 20)`);
+            window.location.reload();
+        } catch(err) {
+            alert("Sisteme aktarma sırasında hata oluştu!");
+            setImportLoading(false);
+        }
     };
 
     return (
