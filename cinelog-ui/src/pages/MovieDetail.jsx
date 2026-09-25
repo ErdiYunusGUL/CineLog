@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
@@ -303,7 +303,13 @@ function MovieDetail() {
                         <div className="row">
                             <div className="col-md-6 mb-2">
                                 <span className="text-info fw-bold">Yönetmen:</span> 
-                                <span className="ms-2">{credits?.crew?.find(c => c.job === 'Director')?.name || "Yükleniyor..."}</span>
+                                <span className="ms-2">
+{credits?.crew?.find(c => c.job === 'Director') ? (
+    <Link to={"/person/" + credits.crew.find(c => c.job === 'Director').id} className="text-white hover:text-red-500 hover:underline transition-colors">
+        {credits.crew.find(c => c.job === 'Director').name}
+    </Link>
+) : "Yükleniyor..."}
+</span>
                             </div>
                             <div className="col-md-6 mb-2">
                                 <span className="text-info fw-bold">Senarist:</span> 
@@ -410,3 +416,4 @@ function MovieDetail() {
 }
 
 export default MovieDetail;
+

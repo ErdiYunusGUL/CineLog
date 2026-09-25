@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MovieDetail from './pages/MovieDetail';
+import PersonDetail from './pages/PersonDetail';
 import Discover from './pages/Discover';
 import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
@@ -58,6 +59,7 @@ function App() {
           <Route path="/login" element={<Login setAuthUser={setUser} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/movie/:id" element={<MovieDetail />} />
+          <Route path="/person/:id" element={<PersonDetail />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/community" element={<Community />} />
           <Route path="/user/:id" element={<PublicProfile />} />
@@ -75,4 +77,5 @@ function App() {
 }
 
 export default App;
+
 

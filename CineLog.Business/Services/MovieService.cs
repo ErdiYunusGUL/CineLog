@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using CineLog.Entity.DTOs;
 
@@ -183,5 +183,11 @@ namespace CineLog.Business.Services
         }
 
 
+        public async Task<string> GetPersonDetailsAsync(int personId)
+        {
+            var response = await _httpClient.GetAsync("https://api.themoviedb.org/3/person/" + personId + "?api_key=" + _apiKey + "&language=tr-TR&append_to_response=movie_credits");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
     }
 }

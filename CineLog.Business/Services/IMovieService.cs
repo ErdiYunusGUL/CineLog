@@ -1,4 +1,4 @@
-using CineLog.Entity.DTOs;
+﻿using CineLog.Entity.DTOs;
 
 namespace CineLog.Business.Services
 {
@@ -22,5 +22,6 @@ namespace CineLog.Business.Services
         Task<string> GetMovieDetailsAsync(int movieId);
         Task<string> GetMovieCreditsAsync(int movieId);
         Task<string> SearchPersonAsync(string name);
+        Task<string> GetPersonDetailsAsync(int personId);
     }
 }

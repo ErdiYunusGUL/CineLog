@@ -1,4 +1,4 @@
-using CineLog.Business.Services;
+﻿using CineLog.Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CineLog.API.Controllers
@@ -160,5 +160,18 @@ namespace CineLog.API.Controllers
         }
 
 
+        [HttpGet("person/{personId}")]
+        public async Task<IActionResult> GetPersonDetails(int personId)
+        {
+            try
+            {
+                var json = await _movieService.GetPersonDetailsAsync(personId);
+                return Content(json, "application/json");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }
