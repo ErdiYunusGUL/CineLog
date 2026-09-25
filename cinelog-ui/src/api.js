@@ -1,7 +1,7 @@
 ﻿import axios from 'axios';
 
 // Backend (C#) API'mizin çalıştığı Render.com Bulut Sunucusu Adresi
-const API_URL = 'https://localhost:7006/api';
+const API_URL = 'http://localhost:5205/api';
 
 const api = axios.create({
     baseURL: API_URL
@@ -17,3 +17,4 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+
