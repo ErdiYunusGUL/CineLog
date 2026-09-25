@@ -445,7 +445,7 @@ function MovieDetail() {
                 </div>
 
                 {/* DISQUS NATIVE ALANI */}
-                <div className="bg-light p-3 rounded" id="disqus_thread"></div>
+                <div className="bg-[#0a0a0c] border border-white/10 p-4 md:p-8 rounded-3xl shadow-2xl mt-4" id="disqus_thread"></div>
 
             </div>
         </div>
@@ -453,6 +453,7 @@ function MovieDetail() {
 }
 
 export default MovieDetail;
+
 
 
 
