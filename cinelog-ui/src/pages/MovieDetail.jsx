@@ -305,8 +305,14 @@ function MovieDetail() {
                                 <span className="text-info fw-bold">Yönetmen:</span> 
                                 <span className="ms-2">
 {credits?.crew?.find(c => c.job === 'Director') ? (
-    <Link to={"/person/" + credits.crew.find(c => c.job === 'Director').id} className="text-white hover:text-red-500 hover:underline transition-colors">
-        {credits.crew.find(c => c.job === 'Director').name}
+    <Link 
+        to={"/person/" + credits.crew.find(c => c.job === 'Director').id} 
+        style={{ color: '#f87171', fontWeight: 'bold', textDecoration: 'none' }}
+        onMouseEnter={(e) => { e.target.style.color = '#ef4444'; e.target.style.textDecoration = 'underline'; }}
+        onMouseLeave={(e) => { e.target.style.color = '#f87171'; e.target.style.textDecoration = 'none'; }}
+        title="Yönetmen Profiline Git"
+    >
+        {credits.crew.find(c => c.job === 'Director').name} ↗
     </Link>
 ) : "Yükleniyor..."}
 </span>
@@ -333,7 +339,21 @@ function MovieDetail() {
                             </div>
                             <div className="col-12 mt-2 pt-2 border-top border-secondary">
                                 <span className="text-info fw-bold">Oyuncular:</span> 
-                                <span className="ms-2">{credits?.cast?.slice(0, 5).map(c => c.name).join(', ') || "Yükleniyor..."}</span>
+                                <span className="ms-2">
+    {credits?.cast?.slice(0, 5).map((c, idx, arr) => (
+        <span key={c.id}>
+            <Link 
+                to={"/person/" + c.id} 
+                style={{ color: '#f87171', textDecoration: 'none' }}
+                onMouseEnter={(e) => { e.target.style.color = '#ef4444'; e.target.style.textDecoration = 'underline'; }}
+                onMouseLeave={(e) => { e.target.style.color = '#f87171'; e.target.style.textDecoration = 'none'; }}
+            >
+                {c.name}
+            </Link>
+            {idx < arr.length - 1 && ", "}
+        </span>
+    )) || "Yükleniyor..."}
+</span>
                             </div>
                         </div>
                     </div>
@@ -416,5 +436,6 @@ function MovieDetail() {
 }
 
 export default MovieDetail;
+
 
 
