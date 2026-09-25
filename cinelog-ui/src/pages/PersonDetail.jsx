@@ -43,7 +43,12 @@ function PersonDetail() {
     
     // En iyileri (veya en bilinenleri) listelemek için kısa birleştirme
     const isDirector = directedMovies.length > 0;
-    const displayMovies = isDirector ? directedMovies : castMovies;
+    // Çıkış yılına göre (Yeniden Eskiye) sıralama yapıyoruz
+    const displayMovies = [...(isDirector ? directedMovies : castMovies)].sort((a, b) => {
+        if (!a.release_date) return 1;
+        if (!b.release_date) return -1;
+        return new Date(b.release_date) - new Date(a.release_date);
+    });
 
     return (
         <div className="container mx-auto px-4 py-8 animate-in fade-in zoom-in duration-700">
@@ -93,7 +98,7 @@ function PersonDetail() {
                             {isDirector ? 'Yönettiği Filmler' : 'Oynadığı Filmler'}
                         </h3>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {displayMovies.slice(0, 15).map(movie => (
+                            {displayMovies.slice(0, 20).map(movie => (
                                 <Link 
                                     to={'/movie/' + movie.id} 
                                     key={movie.id}
@@ -127,4 +132,5 @@ function PersonDetail() {
 }
 
 export default PersonDetail;
+
 
