@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import api from '../api';
 import { Link, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -169,6 +169,17 @@ function Home() {
             </div>
 
             {/* ANA FİLM GRİDİ */}
+            {/* BOŞ DURUM (NO RESULTS) */}
+            {movies.length === 0 && searchQuery && (
+                <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
+                    <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                        <i className="bi bi-search text-4xl text-gray-500"></i>
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">"{searchQuery}" için sonuç bulunamadı</h3>
+                    <p className="text-gray-400 max-w-md">Harf hatası yapmış olabilir misin? Farklı anahtar kelimelerle tekrar aramayı dene.</p>
+                </div>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                 {movies.map(movie => (
                     <Link key={movie.id} to={`/movie/${movie.id}`} state={{ movie: movie }} style={{ textDecoration: 'none' }}>
@@ -331,3 +342,4 @@ function Home() {
 }
 
 export default Home;
+
