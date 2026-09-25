@@ -21,7 +21,9 @@ namespace CineLog.Business.Services
         // YENİ: Raw JSON dönecek
         Task<string> GetMovieDetailsAsync(int movieId);
         Task<string> GetMovieCreditsAsync(int movieId);
+        Task<string> GetSimilarMoviesAsync(int movieId);
         Task<string> SearchPersonAsync(string name);
         Task<string> GetPersonDetailsAsync(int personId);
     }
 }
+

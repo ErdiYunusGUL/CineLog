@@ -164,6 +164,13 @@ namespace CineLog.Business.Services
         }
 
         // YENİ: Veri Analitiği (Data Science) İçin Yönetmen ve Oyuncu Kadrosunu Çeker
+                public async Task<string> GetSimilarMoviesAsync(int movieId)
+        {
+            var response = await _httpClient.GetAsync($"https://api.themoviedb.org/3/movie/{movieId}/similar?api_key={_apiKey}&language=tr-TR");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
         public async Task<string> GetMovieCreditsAsync(int movieId)
         {
             var response = await _httpClient.GetAsync($"https://api.themoviedb.org/3/movie/{movieId}/credits?api_key={_apiKey}");
@@ -191,3 +198,4 @@ namespace CineLog.Business.Services
         }
     }
 }
+

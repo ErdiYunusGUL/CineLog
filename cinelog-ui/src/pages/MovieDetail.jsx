@@ -14,7 +14,8 @@ function MovieDetail() {
     const [hoverRating, setHoverRating] = useState(0); 
     const [communityRating, setCommunityRating] = useState(0);
     const [providers, setProviders] = useState([]);
-    const [credits, setCredits] = useState(null); // YENİ: Oyuncu ve Yönetmen Hafızası
+    const [credits, setCredits] = useState(null);
+    const [similarMovies, setSimilarMovies] = useState([]); // YENİ: Oyuncu ve Yönetmen Hafızası
     const [message, setMessage] = useState('');
     const [isWatchlist, setIsWatchlist] = useState(false);
     const [isWatched, setIsWatched] = useState(false);
@@ -444,6 +445,33 @@ function MovieDetail() {
                     </div>
                 </div>
 
+                                {/* BENZER FİLMLER ALANI */}
+                {similarMovies && similarMovies.length > 0 && (
+                    <div className="mt-12 mb-8">
+                        <h4 className="text-2xl font-black text-white mb-6 flex items-center gap-3">
+                            <i className="bi bi-collection-play text-red-500"></i> Benzer Filmler
+                        </h4>
+                        <div className="flex overflow-x-auto gap-4 pb-4 snap-x custom-scrollbar">
+                            {similarMovies.slice(0, 10).map(sm => (
+                                <Link 
+                                    to={'/movie/' + sm.id}
+                                    key={sm.id} 
+                                    className="snap-start shrink-0 w-32 md:w-40 group relative rounded-xl overflow-hidden bg-gray-900 border border-white/5 hover:border-red-500/50 transition-all"
+                                >
+                                    <img 
+                                        src={sm.poster_path ? 'https://image.tmdb.org/t/p/w342' + sm.poster_path : 'https://via.placeholder.com/342x513?text=Afiş+Yok'} 
+                                        alt={sm.title}
+                                        className="w-full h-auto object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                                        <p className="text-white text-xs font-bold line-clamp-2 text-center w-full">{sm.title}</p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* DISQUS NATIVE ALANI */}
                 <div className="bg-[#0a0a0c] border border-white/10 p-4 md:p-8 rounded-3xl shadow-2xl mt-4" id="disqus_thread"></div>
 
@@ -453,6 +481,9 @@ function MovieDetail() {
 }
 
 export default MovieDetail;
+
+
+
 
 
 
