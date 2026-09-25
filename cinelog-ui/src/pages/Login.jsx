@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import api from '../api';
@@ -6,6 +6,7 @@ import api from '../api';
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(true);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -15,7 +16,7 @@ function Login() {
         setLoading(true);
         setError('');
         try {
-            const response = await api.post('/Auth/login', { email, password });
+            const response = await api.post('/Auth/login', { email, password, rememberMe });
             localStorage.setItem('token', response.data.token);
             window.location.href = "/"; 
         } catch (err) {
@@ -81,6 +82,19 @@ function Login() {
                             <><LogIn className="w-5 h-5" /> Giriş Yap</>
                         )}
                     </button>
+                                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="rememberMe"
+                            className="w-4 h-4 text-red-600 bg-gray-800 border-gray-700 rounded focus:ring-red-600 focus:ring-2 accent-red-600"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-400 cursor-pointer">
+                            Beni Hatırla
+                        </label>
+                    </div>
+                    </button>
                 </form>
 
                 {/* OAUTH 2.0 BÖLÜMÜ */}
@@ -127,3 +141,4 @@ function Login() {
 }
 
 export default Login;
+

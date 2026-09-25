@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+﻿import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import Home from './pages/Home';
@@ -25,8 +25,16 @@ function App() {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        const userRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'User';
-        setUser({ username: decoded.unique_name, role: userRole });
+        const currentTime = Date.now() / 1000;
+        
+        if (decoded.exp && decoded.exp < currentTime) {
+            // Token süresi dolmuşsa çıkış yap
+            localStorage.removeItem('token');
+            setUser(null);
+        } else {
+            const userRole = decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'User';
+            setUser({ username: decoded.unique_name, role: userRole });
+        }
       } catch (error) {
         localStorage.removeItem('token');
       }
@@ -67,3 +75,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using CineLog.DataAccess.Context;
@@ -57,7 +57,7 @@ namespace CineLog.Business.Services
             }
 
             // GİRİŞ BAŞARILI! Yaka Kartını (JWT Token) Basma Zamanı
-            var token = GenerateJwtToken(user);
+            var token = GenerateJwtToken(user, dto.RememberMe);
 
             return new AuthResponseDto
             {
@@ -68,7 +68,7 @@ namespace CineLog.Business.Services
         }
 
         // --- GİZLİ TOKEN BASMA MAKİNESİ ---
-        private string GenerateJwtToken(User user)
+        private string GenerateJwtToken(User user, bool rememberMe)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"] ?? throw new Exception("SecretKey bulunamadı!");
@@ -91,7 +91,7 @@ namespace CineLog.Business.Services
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiryMinutes"]!)),
+                expires: DateTime.UtcNow.AddMinutes(rememberMe ? (30 * 24 * 60) : double.Parse(jwtSettings["ExpiryMinutes"]!)),
                 signingCredentials: creds
             );
             // Kartı metne çevirip veriyoruz
@@ -99,3 +99,5 @@ namespace CineLog.Business.Services
         }
     }
 }
+
+

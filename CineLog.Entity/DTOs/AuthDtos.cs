@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -17,6 +17,7 @@ namespace CineLog.Entity.DTOs
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }
     }
 
     // Giriş başarılı olunca bizim ona geri döneceğimiz cevap (Yaka Kartı/Token)
