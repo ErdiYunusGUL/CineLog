@@ -1,4 +1,4 @@
-using CineLog.DataAccess.Context;
+﻿using CineLog.DataAccess.Context;
 using CineLog.Entity.DTOs;
 using CineLog.Entity.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -211,11 +211,12 @@ namespace CineLog.Business.Services
         }
 
         // YENİ: React'e "Bu kullanıcı bu filmi listeye eklemiş mi veya izlemiş mi?" cevabını verir
-        public async Task<(bool isWatchlist, bool isWatched)> GetMovieStatusAsync(int userId, int movieId)
+        public async Task<(bool isWatchlist, bool isWatched, int? userRating)> GetMovieStatusAsync(int userId, int movieId)
         {
             var isWatchlist = await _context.Watchlists.AnyAsync(w => w.UserId == userId && w.MovieId == movieId);
             var isWatched = await _context.WatchedHistories.AnyAsync(w => w.UserId == userId && w.MovieId == movieId);
-            return (isWatchlist, isWatched);
+            var userReview = await _context.Reviews.FirstOrDefaultAsync(r => r.UserId == userId && r.MovieId == movieId);
+            return (isWatchlist, isWatched, userReview?.Rating);
         }
 
         // YENİ: Kullanıcının İzlediği Filmlerin Sadece ID'lerini (Hızlı Filtreleme İçin) Getirir
@@ -498,3 +499,5 @@ namespace CineLog.Business.Services
 
     }
 }
+
+

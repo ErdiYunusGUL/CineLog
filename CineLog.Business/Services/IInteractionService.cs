@@ -1,4 +1,4 @@
-using CineLog.Entity.DTOs;
+﻿using CineLog.Entity.DTOs;
 using CineLog.Entity.Entities;
 
 namespace CineLog.Business.Services
@@ -20,7 +20,7 @@ namespace CineLog.Business.Services
         Task ToggleWatchlistAsync(int userId, AddMovieInteractionDto dto);
         Task ToggleWatchedMovieAsync(int userId, AddMovieInteractionDto dto);
 
-        Task<(bool isWatchlist, bool isWatched)> GetMovieStatusAsync(int userId, int movieId);
+        Task<(bool isWatchlist, bool isWatched, int? userRating)> GetMovieStatusAsync(int userId, int movieId);
 
         Task<List<int>> GetWatchedMovieIdsAsync(int userId);
 
@@ -40,3 +40,4 @@ namespace CineLog.Business.Services
         Task ImportUserRatingsCsvAsync(int userId, Stream csvStream);
     }
 }
+

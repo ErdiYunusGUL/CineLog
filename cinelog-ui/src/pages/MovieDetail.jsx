@@ -10,7 +10,8 @@ function MovieDetail() {
     // Eğer önceki sayfadan kargo (state) geldiyse onu kullan, gelmediyse boş (null) başla
     const [movie, setMovie] = useState(location.state?.movie || null);
 
-    const [rating, setRating] = useState(0); 
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0); 
     const [communityRating, setCommunityRating] = useState(0);
     const [providers, setProviders] = useState([]);
     const [credits, setCredits] = useState(null); // YENİ: Oyuncu ve Yönetmen Hafızası
@@ -58,6 +59,7 @@ function MovieDetail() {
            .then(res => {
                setIsWatchlist(res.data.isWatchlist);
                setIsWatched(res.data.isWatched);
+               if (res.data.userRating) setRating(res.data.userRating);
            })
            .catch(err => { /* Login olmayanları geç */ });
 
@@ -364,30 +366,45 @@ function MovieDetail() {
 
                 <hr className="border-secondary mt-5" />
 
-                <h4 className="text-light"><i className="bi bi-star-half text-warning"></i> Filme Puan Ver</h4>
-                
-                <div className="card mt-4 mb-5" style={{ backgroundColor: 'var(--bg-card)', border: 'none' }}>
-                    <div className="card-body">
-                        {message && <div className="alert alert-success">{message}</div>}
-                        <form onSubmit={handleRatingSubmit}>
-                            <div className="mb-4">
-                                <div className="d-flex fs-3">
-                                    {[...Array(10)].map((star, index) => {
-                                        index += 1;
-                                        return (
-                                            <i key={index} 
-                                               className={index <= rating ? "bi bi-star-fill text-warning" : "bi bi-star text-secondary"} 
-                                               style={{ cursor: 'pointer', marginRight: '8px' }}
-                                               onClick={() => setRating(index)}
-                                            ></i>
-                                        );
-                                    })}
-                                </div>
-                                <small className="text-muted mt-2 d-block">Puanınız: {rating} / 10</small>
+                <div className="bg-[#0a0a0c] border border-white/10 rounded-3xl p-6 md:p-8 mt-12 mb-8 shadow-2xl relative overflow-hidden">
+                    {/* Arka plan parlama efekti */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+                    <h4 className="text-2xl font-black text-white mb-6 flex items-center gap-3 relative z-10">
+                        <i className="bi bi-star-fill text-yellow-500"></i> Filme Puan Ver
+                    </h4>
+                    
+                    {message && (
+                        <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-xl text-sm mb-6 relative z-10">
+                            <i className="bi bi-check-circle me-2"></i> {message}
+                        </div>
+                    )}
+                    
+                    <form onSubmit={handleRatingSubmit} className="relative z-10">
+                        <div className="mb-6 flex flex-col items-start gap-4">
+                            <div className="d-flex flex-wrap gap-3 fs-2">
+                                {[...Array(10)].map((star, index) => {
+                                    index += 1;
+                                    return (
+                                        <i key={index} 
+                                           className={index <= (hoverRating || rating) ? "bi bi-star-fill text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)] scale-110 transition-all duration-200" : "bi bi-star text-gray-600 hover:text-gray-400 transition-all duration-200"} 
+                                           style={{ cursor: 'pointer' }}
+                                           onClick={() => setRating(index)}
+                                           onMouseEnter={() => setHoverRating(index)}
+                                           onMouseLeave={() => setHoverRating(0)}
+                                        ></i>
+                                    );
+                                })}
                             </div>
-                            <button type="submit" className="btn btn-outline-warning">Puanı Kaydet</button>
-                        </form>
-                    </div>
+                            <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-full mt-2">
+                                <span className="text-gray-300 font-medium">Seçilen Puan: </span>
+                                <span className="text-yellow-400 font-bold text-lg">{hoverRating || rating} <span className="text-gray-500 text-sm font-normal">/ 10</span></span>
+                            </div>
+                        </div>
+                        <button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)] hover:shadow-[0_0_30px_rgba(234,179,8,0.5)] flex items-center gap-2">
+                            <i className="bi bi-send-fill"></i> Puanı Kaydet
+                        </button>
+                    </form>
                 </div>
 
                 {/* YENİ: YAPAY ZEKA YORUM ÖZETLEYİCİ */}
@@ -436,6 +453,9 @@ function MovieDetail() {
 }
 
 export default MovieDetail;
+
+
+
 
 
 

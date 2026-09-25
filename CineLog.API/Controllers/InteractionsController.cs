@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using CineLog.Business.Services;
 using CineLog.Entity.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -149,7 +149,7 @@ namespace CineLog.API.Controllers
             if (int.TryParse(userIdString, out int userId))
             {
                 var status = await _interactionService.GetMovieStatusAsync(userId, movieId);
-                return Ok(new { isWatchlist = status.isWatchlist, isWatched = status.isWatched });
+                return Ok(new { isWatchlist = status.isWatchlist, isWatched = status.isWatched, userRating = status.userRating });
             }
             return Unauthorized();
         }
@@ -258,3 +258,4 @@ namespace CineLog.API.Controllers
         }
     }
 }
+
