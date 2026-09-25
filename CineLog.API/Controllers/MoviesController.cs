@@ -146,6 +146,20 @@ namespace CineLog.API.Controllers
 
         // Örnek: api/Movies/12345/credits
         [HttpGet("{id}/credits")]
+                [HttpGet("{movieId}/similar")]
+        public async Task<IActionResult> GetSimilarMovies(int movieId)
+        {
+            try
+            {
+                var movieJson = await _movieService.GetSimilarMoviesAsync(movieId);
+                return Content(movieJson, "application/json");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         public async Task<IActionResult> GetCredits(int id)
         {
             try
@@ -175,4 +189,5 @@ namespace CineLog.API.Controllers
         }
     }
 }
+
 
