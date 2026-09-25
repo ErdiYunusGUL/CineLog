@@ -69,6 +69,11 @@ function MovieDetail() {
            .then(res => setCredits(res.data))
            .catch(err => console.error(err));
 
+        // YENİ: Benzer Filmleri Çek
+        api.get(`/Movies/${movie.id}/similar`)
+           .then(res => setSimilarMovies(res.data.results || []))
+           .catch(err => console.error(err));
+
         // YENİ: Kullanıcının özel listelerini çek (Dropdown için)
         api.get('/Interactions/custom-lists')
            .then(res => setMyLists(res.data))
@@ -481,6 +486,7 @@ function MovieDetail() {
 }
 
 export default MovieDetail;
+
 
 
 
