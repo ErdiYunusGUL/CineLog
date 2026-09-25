@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import api from '../api';
 
 function MovieDetail() {
@@ -416,4 +416,5 @@ function MovieDetail() {
 }
 
 export default MovieDetail;
+
 
